@@ -1,0 +1,5 @@
+{
+  "code": 400,
+  "error": "Human readable message which is suitable for user interface display, and helpful to the user",
+  "debug": "Programmer / debugging detail or traceback"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "zenmos",
+  "version": "0.0.1",
+  "description": "Automated testing application for AMWA NMOS IS-04.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/*.js",
+    "lint": "eslint **/*.js",
+    "lint-fix": "eslint --fix **/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Streampunk/zenmos.git"
+  },
+  "keywords": [
+    "NMOS",
+    "AMWA",
+    "IS-04"
+  ],
+  "author": "Streampunk Media <furnace@streampunk.media> (http://www.streampunk.media)",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Streampunk/zenmos/issues"
+  },
+  "homepage": "https://github.com/Streampunk/zenmos#readme",
+  "dependencies": {
+    "ajv": "^6.1.1",
+    "yargs": "^11.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.9.0",
+    "eslint-config-google": "^0.9.1",
+    "tape": "^4.8.0"
+  }
+}
