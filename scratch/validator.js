@@ -19,7 +19,7 @@ const fs = require('fs');
 const [ readFile, readdir ] = [ promisify(fs.readFile), promisify(fs.readdir) ];
 const path = require('path');
 const Ajv = require('ajv');
-var ajv = new Ajv({schemaId: 'id'});
+var ajv = new Ajv({schemaId: 'auto', allErrors: true});
 ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'));
 
 var args = yargs
@@ -37,7 +37,7 @@ async function checkIt(schemaFile, instanceFile) {
         .filter(x => x.endsWith('.json'))
         .map(x => readFile(path.join(schemaFile, x))
           .then(JSON.parse)
-          .then(y => { console.log(x); ajv.addSchema(y, `${x}`); })));   // console.log(ajv.getSchema('flow.json'));
+          .then(y => { ajv.addSchema(y, x); })));   // console.log(ajv.getSchema('flow.json'));
     var instance = await readFile(instanceFile).then(JSON.parse);
     let valid = ajv.validate('flow.json', instance);
     if (!valid) console.log(ajv.errors);
