@@ -31,5 +31,10 @@
     "eslint": "^4.9.0",
     "eslint-config-google": "^0.9.1",
     "tape": "^4.8.0"
+  },
+  "node-red": {
+    "nodes": {
+      "jsonValidator": "nodes/jsonValidator.js"
+    }
   }
 }

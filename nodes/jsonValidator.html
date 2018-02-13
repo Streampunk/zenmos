@@ -1,0 +1,78 @@
+<!--
+  Copyright 2018 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('json-validator',{
+      category: 'function',
+      color: '#B19479',
+      defaults: {
+        name: { value : "" },
+        nmosVersion: { value : "all" }
+      },
+      inputs:1,
+      outputs:1,
+      icon: "function.png",
+      label: function() {
+        return this.name || "json-validator";
+      }
+    });
+  </script>
+
+  <script type="text/x-red" data-template-name="json-validator">
+  <!-- Common to all valve nodes -->
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-nmosVersion"> NMOS version</label>
+    <select id="node-input-nmosVersion">
+      <option value="all" selected>all versions</option>
+      <option value="v10">v1.0</option>
+      <option value="v11">v1.1</option>
+      <option value="v12">v1.2</option>
+    </select>
+  </div>
+  </script>
+
+  <style>
+  .param-table table, th, td {
+    vertical-align: top;
+    padding: 3px;
+  }
+  </style>
+
+<script type="text/x-red" data-help-name="json-validator">
+  <h1>JSON Validator</h1>
+  <p>Validate documents against the specified version of an NMOS schema. Valid
+  messages are passed through with a validated-at timetamp. Invalid doucments
+  are passed through with additional details of any validation errors and a flag
+  to say </p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of node.</td>
+   </tr>
+  </table>
+  </div>
+
+</script>
