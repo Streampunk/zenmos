@@ -1,0 +1,25 @@
+{ "primaryNameservers": [ "192.168.0.254", "8.8.4.4" ]
+, "domains": [
+    { "id": "zenmos.net", "revokedAt": 0 }
+  ]
+, "records": [
+    {"zone":"zenmos.net","name":"zenmos.net","type":"NS","class":"IN","ttl":255,"tld":"net","sld":"zenmos","sub":"ns1","data":"ns1.zenmos.net"}
+  , {"zone":"zenmos.net","name":"ns1.zenmos.net","type":"A","class":"IN","ttl":255,"tld":"net","sld":"zenmos","sub":"ns1","address":"127.0.0.1"}
+  , {"zone":"zenmos.net","name":"zenmos.net","type":"A","class":"IN","ttl":255,"tld":"net","sld":"zenmos","address":"127.0.0.1"}
+
+  , {"zone":"zenmos.net","name":"b._dns-sd._udp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"ns1.zenmos.net"}
+  , {"zone":"zenmos.net","name":"db._dns-sd._udp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"ns1.zenmos.net"}
+  , {"zone":"zenmos.net","name":"lb._dns-sd._udp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"ns1.zenmos.net"}
+
+  , {"zone":"zenmos.net","name":"_services._dns-sd._udp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"_nmos-registration._tcp"}
+  , {"zone":"zenmos.net","name":"_services._dns-sd._udp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"_nmos-query._tcp"}
+
+  , {"zone":"zenmos.net","name":"_nmos-registration._tcp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"regsrv-1._nmos-registration._tcp.zenmos.net"}
+  , {"zone":"zenmos.net","name":"regsrv-1._nmos-registration._tcp.zenmos.net","type":"SRV","class":"IN","ttl":255,"priority":10,"weight":5,"port":3001,"target":"127.0.0.1"}
+  , {"zone":"zenmos.net","name":"regsrv-1._nmos-registration._tcp.zenmos.net","type":"TXT","class":"IN","ttl":255,"data":["api_proto=http", "api_ver=v1.0", "pri=10"]}
+
+  , {"zone":"zenmos.net","name":"_nmos-query._tcp.zenmos.net","type":"PTR","class":"IN","ttl":255,"data":"querysrv-1._nmos-query._tcp.zenmos.net"}
+  , {"zone":"zenmos.net","name":"querysrv-1._nmos-query._tcp.zenmos.net","type":"SRV","class":"IN","ttl":255,"priority":10,"weight":5,"port":3002,"target":"127.0.0.1"}
+  , {"zone":"zenmos.net","name":"querysrv-1._nmos-query._tcp.zenmos.net","type":"TXT","class":"IN","ttl":255,"data":["api_proto=http", "api_ver=v1.0", "pri=10"]}
+  ]
+}

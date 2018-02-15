@@ -1,0 +1,24 @@
+{
+  "name": "dns-test",
+  "version": "0.0.1",
+  "description": "Scratch test DNS server",
+  "main": "index.js",
+  "dependencies": {
+    "digd.js": "1.1.13",
+    "dnsd": "^0.9.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Streampunk/dns-test.git"
+  },
+  "author": "Streampunk Media Ltd.",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Streampunk/dns-test/issues"
+  },
+  "homepage": "https://github.com/Streampunk/dns-test#readme"
+}
