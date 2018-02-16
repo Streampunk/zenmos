@@ -34,7 +34,8 @@
   },
   "node-red": {
     "nodes": {
-      "jsonValidator": "nodes/jsonValidator.js"
+      "jsonValidator": "nodes/jsonValidator.js",
+      "auditLog": "nodes/auditLog.js"
     }
   }
 }

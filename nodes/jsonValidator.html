@@ -38,7 +38,7 @@
     <input type="text" id="node-input-name" placeholder="name">
   </div>
   <div class="form-row">
-    <label for="node-input-nmosVersion"> NMOS version</label>
+    <label for="node-input-nmosVersion"><i class="fas fa-code-branch"></i> NMOS version</label>
     <select id="node-input-nmosVersion">
       <option value="all" selected>all versions</option>
       <option value="v10">v1.0</option>
@@ -60,7 +60,7 @@
   <p>Validate documents against the specified version of an NMOS schema. Valid
   messages are passed through with a validated-at timetamp. Invalid doucments
   are passed through with additional details of any validation errors and a flag
-  to say </p>
+  to say they are invalid.</p>
 
   <h3>Parameters</h3>
   <div class="param-table">
@@ -72,6 +72,9 @@
     <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
     <td>Name of node.</td>
    </tr>
+   <tr>
+    <td><i class="fas fa-code-branch"></i> NMOS version</td>
+    <td>Version of the NMOS specification to validate against.</td>
   </table>
   </div>
 

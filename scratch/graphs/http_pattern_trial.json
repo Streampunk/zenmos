@@ -1,0 +1,113 @@
+[
+    {
+        "id": "4a9a086a.b565f8",
+        "type": "tab",
+        "label": "Dynamorse"
+    },
+    {
+        "id": "595004fa.a6affc",
+        "type": "comment",
+        "z": "4a9a086a.b565f8",
+        "name": "Streampunk Media",
+        "info": "Design and deploy professional media workflows with [_Dynamorse_](https://github.com/Streampunk/dynamorse/blob/master/README.md).\n\nFor support, development or further information, please e-mail [Streampunk Media Ltd](http://www.streampunk.media) on [furnace@streampunk.media](mailto: furnace@streampunk.media).\n\nDynamorse depends on [codecadon](https://github.com/Streampunk/codecadon) that incorprates binaries compiled from unmodified [LGPL v3 licensed code](https://github.com/Streampunk/codecadon/tree/master/licenses) from the FFMPEG project.",
+        "x": 122,
+        "y": 45,
+        "wires": []
+    },
+    {
+        "id": "970ddbe6.199568",
+        "type": "http in",
+        "z": "4a9a086a.b565f8",
+        "name": "API POST",
+        "url": "/x-nmos(/(:ver)?)?(/(:api)?)?(/(:resource|health/nodes)?)?(/(:id)?)?",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 311.5,
+        "y": 294,
+        "wires": [
+            [
+                "629482d9.10015c",
+                "5dbb781f.6e4738"
+            ]
+        ]
+    },
+    {
+        "id": "629482d9.10015c",
+        "type": "debug",
+        "z": "4a9a086a.b565f8",
+        "name": "",
+        "active": true,
+        "console": "true",
+        "complete": "req.params",
+        "x": 670,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "897c63d1.e0875",
+        "type": "http response",
+        "z": "4a9a086a.b565f8",
+        "name": "",
+        "statusCode": "",
+        "headers": {
+            "Wibble": "wobble"
+        },
+        "x": 730,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "5bce7c47.fb21e4",
+        "type": "http in",
+        "z": "4a9a086a.b565f8",
+        "name": "API GET",
+        "url": "/x-nmos(/(:ver)?)?(/(:api)?)?(/(:resource|health/nodes)?)?(/(:id)?)?",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 309.5,
+        "y": 381,
+        "wires": [
+            [
+                "5dbb781f.6e4738",
+                "629482d9.10015c"
+            ]
+        ]
+    },
+    {
+        "id": "5dbb781f.6e4738",
+        "type": "function",
+        "z": "4a9a086a.b565f8",
+        "name": "",
+        "func": "if (msg.req.params.ver) {\n    msg.statusCode = 200;\n    msg.payload = '[ \"registration/\" ]';\n} \nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 540.5,
+        "y": 227,
+        "wires": [
+            [
+                "897c63d1.e0875",
+                "629482d9.10015c"
+            ]
+        ]
+    },
+    {
+        "id": "8d714084.94186",
+        "type": "http in",
+        "z": "4a9a086a.b565f8",
+        "name": "API DELETE",
+        "url": "/x-nmos(/(:ver)?)?(/(:api)?)?(/(:resource|health/nodes)?)?(/(:id)?)?",
+        "method": "delete",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 316.5,
+        "y": 472,
+        "wires": [
+            [
+                "5dbb781f.6e4738",
+                "629482d9.10015c"
+            ]
+        ]
+    }
+]
