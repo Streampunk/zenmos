@@ -24,15 +24,14 @@ const Ajv = require('ajv');
 function loadSchema(dir, v) {
   let ajv = new Ajv({schemaId: 'auto', allErrors: true});
   ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'));
-  let schemaList = readdir(dir);
-  return Promise.all(
+  return readdir(dir).then(schemaList => Promise.all(
     schemaList
       .filter(x => x.endsWith('.json'))
       .map(x => readFile(path.join(dir, x))
         .then(JSON.parse)
         .then(y => {
           ajv.addSchema(y, x);
-        }))).then(() => ({ v, ajv }));   // console.log(ajv.getSchema('flow.json'));
+        }))).then(() => { return { v: v, ajv: ajv }; }) );   // console.log(ajv.getSchema('flow.json'));
 }
 
 module.exports = function (RED) {
@@ -44,22 +43,22 @@ module.exports = function (RED) {
 
     switch (config.nmosVersion) {
     case 'v12': {
-      readSchemas.push(loadSchema('../schemas/v1.2.x/', 'v.1.2.x'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.2.x/', 'v1.2'));
       break;
     }
     case 'v11': {
-      readSchemas.push(loadSchema('../schemas/v1.1.x/', 'v1.1.x'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.1.x/', 'v1.1'));
       break;
     }
     case 'v10': {
-      readSchemas.push(loadSchema('../schemas/v1.0.x/', 'v1.0.x'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.0.x/', 'v1.0'));
       break;
     }
     case 'all':
     default: {
-      readSchemas.push(loadSchema('../schemas/v1.2.x/', 'v1.2.x'));
-      readSchemas.push(loadSchema('../schemas/v1.1.x/', 'v1.1.x'));
-      readSchemas.push(loadSchema('../schemas/v1.0.x/', 'v1.0.x'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.2.x/', 'v1.2'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.1.x/', 'v1.1'));
+      readSchemas.push(loadSchema(__dirname + '/../schemas/v1.0.x/', 'v1.0'));
       break;
     }
     }
@@ -67,19 +66,30 @@ module.exports = function (RED) {
     Promise.all(readSchemas).then(loaded => {
       loaded.forEach(s => { schemas.set(s.v, s.ajv); });
       this.on('input', msg => {
-        if ((msg.payload.type === 'HTTPRequest') &&
-          (msg.payload.valid === undefined)) {
-          let resourceType = msg.payload.resourceType;
-          let body = msg.payload.body;
-          let ajv = schemas.get(msg.payload.nmosVersion);
-          let valid = ajv.validate(`${resourceType}.json`, body);
-          if (valid) {
-            msg.payload.valid = true;
+        if ((msg.type === 'HTTP POST') &&
+          (typeof msg.validated !== 'undefined') && (msg.validated === false)) {
+          let resourceType = msg.req.params.resource;
+          if (msg.req.params.id) {
+            resourceType = resourceType.slice(0, -1); // Chop off the last 's'
+          }
+          let body = msg.payload;
+          let ajv = schemas.get(msg.version);
+          if (!ajv) {
+            msg.valid = false;
+            msg.validated = true;
+            msg.payload = `Not set up to validate messages with version ${msg.version}.`;
             return this.send(msg);
           }
-          if (!valid) {
-            msg.payload.valid = false;
-            msg.payload.validationErrors = ajv.errors;
+          let valid = ajv.validate(`${resourceType}.json`, body);
+          msg.validated = true;
+          if (valid) {
+            msg.valid = true;
+            return this.send(msg);
+          }
+          else {
+            msg.valid = false;
+            msg.input = msg.payload;
+            msg.payload = ajv.errors;
             return this.send(msg);
           }
         }

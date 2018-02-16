@@ -33,6 +33,8 @@ module.exports = function (RED) {
       if (log.length > config.limit && log.length % 10 === 0) {
         log = log.slice(-1000);
       }
+      msg.id = msg._msgid;
+      msg.chain = Array.isArray(msg.chain) ? msg.chain.push(msg.id) : [ msg.id ];
       msg.timestamp = Date.now();
       msg.sequence = seq++;
       msg.profile = config.profile;
@@ -54,17 +56,21 @@ module.exports = function (RED) {
       }
 
       if (config.console || config.debug) {
+
         let debugMsg = {
+          id: msg.id,
+          previous: msg.chain.length > 2 ? msg.chain.slice(-2)[0] : undefined,
           timestamp : msg.timestamp,
           sequence: msg.sequence,
           type: msg.type,
           version: msg.version,
           api: msg.api,
-          payloadLength: msg.payload.length,
+          payloadLength: typeof msg.payload === 'string' ? msg.payload.length : undefined,
           validated: msg.validated,
-          valud: msg.valid,
-          payload: msg.payload.slice(0, 60) +
-            msg.payload.length > 60 ? ' ...' : ''
+          valid: msg.valid,
+          payload: typeof msg.payload === 'string' ?
+            msg.payload.slice(0, 60) + (msg.payload.length > 60 ? ' ...' : '') :
+            msg.payload
         };
         if (config.debug) {
           RED.comms.publish('debug', { msg: debugMsg });
@@ -79,7 +85,7 @@ module.exports = function (RED) {
 
     this.on('close', this.close);
   }
-  
+
   AuditLog.prototype.getLog = function () {
     return log.slice(0);
   };
