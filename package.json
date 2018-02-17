@@ -35,7 +35,8 @@
   "node-red": {
     "nodes": {
       "jsonValidator": "nodes/jsonValidator.js",
-      "auditLog": "nodes/auditLog.js"
+      "auditLog": "nodes/auditLog.js",
+      "stateStoreRAM": "nodes/stateStoreRAM.js"
     }
   }
 }

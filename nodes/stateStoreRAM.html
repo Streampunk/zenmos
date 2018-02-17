@@ -15,51 +15,42 @@
 -->
 
 <script type="text/javascript">
-    RED.nodes.registerType('json-validator',{
+    RED.nodes.registerType('state-store-RAM',{
       category: 'function',
       color: '#B19479',
       defaults: {
-        name: { value : "" },
-        nmosVersion: { value : "all" }
+        name: { value : "" }
       },
       inputs:1,
       outputs:1,
-      icon: "function.png",
+      icon: "db.png",
       label: function() {
-        return this.name || "json-validator";
+        return this.name || "state-store-RAM";
       }
     });
   </script>
 
-  <script type="text/x-red" data-template-name="json-validator">
+<script type="text/x-red" data-template-name="state-store-RAM">
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
     <input type="text" id="node-input-name" placeholder="name">
   </div>
-  <div class="form-row">
-    <label for="node-input-nmosVersion"><i class="fa fa-code-fork"></i> NMOS version</label>
-    <select id="node-input-nmosVersion">
-      <option value="all" selected>all versions</option>
-      <option value="v10">v1.0</option>
-      <option value="v11">v1.1</option>
-      <option value="v12">v1.2</option>
-    </select>
-  </div>
-  </script>
+</script>
 
-  <style>
+<style>
   .param-table table, th, td {
     vertical-align: top;
     padding: 3px;
   }
-  </style>
+</style>
 
-<script type="text/x-red" data-help-name="json-validator">
-  <h1>JSON Validator</h1>
-  <p>Validate documents against the specified version of an NMOS schema. Valid
-  messages are passed through with a validated-at timetamp. Invalid doucments
-  are passed through with additional details of any validation errors and a flag
-  to say they are invalid.</p>
+<script type="text/x-red" data-help-name="state-store-RAM">
+  <h1>State Store - RAM</h1>
+  <p>A memory resident store of the current state of NMOS resources.</p>
+
+  <p>This store is neither persistent on failure, backed up in any way or
+  safe from memory leaks. It is intended for short-term testing of NMOS interfaces
+  only and not for production use.</p>
 
   <h3>Parameters</h3>
   <div class="param-table">
@@ -70,10 +61,6 @@
    <tr>
     <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
     <td>Name of node.</td>
-   </tr>
-   <tr>
-    <td><i class="fa fa-code-fork"></i> NMOS version</td>
-    <td>Version of the NMOS specification to validate against.</td>
    </tr>
   </table>
   </div>
