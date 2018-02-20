@@ -44,7 +44,7 @@ module.exports = function (RED) {
 
       // Work out where the message came from
       if (msg.req.method) {
-        msg.type = `HTTP ${msg.req.method}`;
+        // msg.type = `HTTP ${msg.req.method}`;
         msg.version = msg.req.params.ver ? msg.req.params.ver : 'unknown';
         msg.api = msg.req.params.api ? msg.req.params.api : 'unknown';
 

@@ -18,103 +18,119 @@ const bodyParser = require('body-parser');
 
 module.exports = function (RED) {
 
+  // Borrowed from Node-RED HTTPIn
+  // https://github.com/node-red/node-red/blob/c9317659c5049f1929c4fe60bafe3c7dffa97b02/nodes/core/io/21-httpin.js#L123
+  function createResponseWrapper (node,res) {
+    var wrapper = {
+      _res: res
+    };
+    var toWrap = [
+      'append',
+      'attachment',
+      'cookie',
+      'clearCookie',
+      'download',
+      'end',
+      'format',
+      'get',
+      'json',
+      'jsonp',
+      'links',
+      'location',
+      'redirect',
+      'render',
+      'send',
+      'sendfile',
+      'sendFile',
+      'sendStatus',
+      'set',
+      'status',
+      'type',
+      'vary'
+    ];
+    toWrap.forEach(f => {
+      wrapper[f] = function() {
+        node.warn(RED._('httpin.errors.deprecated-call',{method:'msg.res.'+f}));
+        var result = res[f].apply(res,arguments);
+        if (result === res) {
+          return wrapper;
+        } else {
+          return result;
+        }
+      };
+    });
+    return wrapper;
+  }
+
   function NMOSHTTPRequest (config) {
     RED.nodes.createNode(this, config);
 
     const app = express();
     app.use(bodyParser.json());
 
-    app.get(config.base + ':api', (req, res) => {
-      let msg = {
-        type: 'HTTP GET',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
+    this.callback = (req, res) => {
+      let msgid = RED.util.generateId();
+      res._msgid = msgid;
+      if (req.method.match(/^(POST|DELETE|PUT|OPTIONS|PATCH)$/)) {
+        this.send({
+          type: `HTTP ${req.method}`,
+          _msgid: msgid,
+          req: req,
+          res: createResponseWrapper(this, res),
+          payload: req.body
+        });
+      } else if (req.method ==='GET') {
+        this.send({
+          type: 'HTTP GET',
+          _msgig: msgid,
+          req: req,
+          res: createResponseWrapper(this, res),
+          payload: req.query
+        });
+      } else {
+        this.send({
+          type: `HTTP ${req.method}`,
+          _msgid: msgid,
+          req: req,
+          res: createResponseWrapper(this, res)
+        });
+      }
+    };
+
+    app.get(config.base + ':api?', this.callback);
+
+    app.get(config.base + ':api/:ver', this.callback);
+
+    app.get(
+      config.base + ':api/:ver/(:resource|health/nodes)/:id?',
+      this.callback);
+
+    app.post(config.base + ':api', this.callback);
+
+    app.post(config.base + ':api/:ver', this.callback);
+
+    app.post(
+      config.base + ':api/:ver/(:resource|health/nodes)/:id?',
+      this.callback);
+
+    app.delete(config.base + ':api', this.callback);
+
+    app.delete(config.base + ':api/:ver', this.callback);
+
+    app.delete(
+      config.base + ':api?/:ver?/(:resource|health/nodes)/:id?',
+      this.callback);
+
+    app.use((req, res, next) => {
+      res.status(404).json({
+        code: 404,
+        error: `Resource ${req.url} not found.`,
+        debug: null
+      });
+      if (!next) { 3; }
     });
 
-    app.get(config.base + ':api/:ver', (req, res) => {
-      let msg = {
-        type: 'HTTP GET',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
-    });
-
-    app.get(config.base + ':api/:ver/(:resource|health/nodes)/:id?', (req, res) => {
-      let msg = {
-        type: 'HTTP GET',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
-    });
-
-    app.post(config.base + ':api', (req, res) => {
-      let msg = {
-        type: 'HTTP POST',
-        req: req,
-        res: res,
-        payload: req.body
-      };
-      this.send(msg);
-    });
-
-    app.post(config.base + ':api/:ver', (req, res) => {
-      let msg = {
-        type: 'HTTP POST',
-        req: req,
-        res: res,
-        payload: req.body
-      };
-      this.send(msg);
-    });
-
-    app.post(config.base + ':api/:ver/(:resource|health/nodes)/:id?', (req, res) => {
-      let msg = {
-        type: 'HTTP POST',
-        req: req,
-        res: res,
-        payload: req.body
-      };
-      this.send(msg);
-    });
-
-    app.delete(config.base + ':api', (req, res) => {
-      let msg = {
-        type: 'HTTP DELETE',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
-    });
-
-    app.delete(config.base + ':api/:ver', (req, res) => {
-      let msg = {
-        type: 'HTTP DELETE',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
-    });
-
-    app.delete(config.base + ':api?/:ver?/(:resource|health/nodes)/:id?', (req, res) => {
-      let msg = {
-        type: 'HTTP DELETE',
-        req: req,
-        res: res,
-        payload: req.query
-      };
-      this.send(msg);
-    });
-
-    app.use(function(err, req, res, next) {
+    app.use((err, req, res, next) => {
       this.warn(err.stack);
       res.status(500).json({
         code: 400,
