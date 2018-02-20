@@ -24,8 +24,25 @@ module.exports = function (RED) {
 
     this.on('input', msg => {
       let msgType = msg.type;
-      console.log('>>>', msg.req.app._router);
-      console.log('>>>', msg.req.params);
+      // console.log('>>>', msg.req.params);
+      if (msg.type.startsWith('store')) {
+        if (msg.type === 'store create error') {
+          msg.type = 'HTTP 400';
+          msg.statusCode = 400;
+          msg.payload = {
+            code: 400,
+            error: `Store creation error: ${msg.payload}`,
+            debug: null
+          };
+          return this.send(msg);
+        }
+        if (msg.type === 'store create success') {
+          msg.statusCode = msg.update ? 200 : 201;
+          msg.type = `HTTP ${msg.statusCode}`;
+          return this.send(msg);
+        }
+      }
+
       if (!msg.type.startsWith('HTTP')) {
         return; // Only process HTTP messages
       }
@@ -86,6 +103,9 @@ module.exports = function (RED) {
           };
           return this.send(msg);
         }
+
+        msg.type = 'store create request';
+        return this.send(msg);
       }
 
       if (knownResources.indexOf(msg.req.params.resource) < 0) {
@@ -104,13 +124,12 @@ module.exports = function (RED) {
         msg.statusCode = 400;
         msg.payload = {
           code: 400,
-          error: `Attempt to make a ${msgType} without a resource identifier.`,
+          error: `Attempt to make a ${msgType} request without a resource identifier.`,
           debug: msg.req.url
         };
         return this.send(msg);
       }
 
-      console.log('>>>', msg.req.params.id, msg.req.params.id.match(uuidPattern));
       if (msg.req.params.id.match(uuidPattern) === null) {
         msg.type = 'HTTP 400';
         msg.statusCode = 400;
@@ -119,19 +138,20 @@ module.exports = function (RED) {
           error: `Attempt to make a ${msgType} to resource ${msg.req.params.resource} with a malforned UUID.`,
           debug: msg.req.url
         };
-
-        msg.type = 'HTTP 404';
-        msg.statusCode = 404;
-        msg.payload = {
-          code: 404,
-          error: `The resrouce for a request of type ${msgType} was not found.`,
-          debug: msg.req.url
-        };
         return this.send(msg);
-      } // HTTP request
+      }
+
+      msg.type = 'HTTP 404';
+      msg.statusCode = 404;
+      msg.payload = {
+        code: 404,
+        error: `The resrouce for a request of type ${msgType} was not found.`,
+        debug: msg.req.url
+      };
+      return this.send(msg);
     });
 
-    this.on('close', this.close);
+    // this.on('close', this.close);
   }
   RED.nodes.registerType('registration-logic', RegistrationLogic);
 };

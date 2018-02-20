@@ -83,7 +83,10 @@ module.exports = function (RED) {
       this.send(msg);
     });
 
-    this.on('close', this.close);
+    this.on('close', () => {
+      log = [];
+      // Not resetting sequence
+    });
   }
 
   AuditLog.prototype.getLog = function () {

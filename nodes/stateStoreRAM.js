@@ -19,6 +19,7 @@ module.exports = function (RED) {
   const apiVersion = new Map; // Map of API version claimed for the item
   const makeKeys = (resourceType, id, version) =>
     [ `${resourceType}_${id}_${version}`, `${resourceType}_${id}` ];
+
   function StateStoreRAM (config) {
     RED.nodes.createNode(this, config);
 
@@ -102,7 +103,11 @@ module.exports = function (RED) {
       // TODO - send on other messages?
     });
 
-    this.on('close', this.close);
+    this.on('close', () => {
+      store.clear();
+      latest.clear();
+      apiVersion.clear();
+    });
   }
   RED.nodes.registerType('state-store-RAM', StateStoreRAM);
 };

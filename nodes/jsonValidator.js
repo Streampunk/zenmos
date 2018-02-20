@@ -97,7 +97,9 @@ module.exports = function (RED) {
       });
     });
 
-    this.on('close', this.close);
+    this.on('close', () => {
+      schemas.clear();
+    });
   }
   RED.nodes.registerType('json-validator', JSONValidator);
 };
