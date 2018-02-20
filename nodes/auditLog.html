@@ -1,6 +1,22 @@
+<!--
+  Copyright 2018 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
 <script type="text/javascript">
     RED.nodes.registerType('audit-log',{
-      category: 'function',
+      category: 'zenmos',
       color: '#B19479',
       defaults: {
         name: { value : "" },
@@ -16,19 +32,19 @@
         return this.name || "audit-log";
       }
     });
-  </script>
+</script>
 
-  <script type="text/x-red" data-template-name="audit-log">
+<script type="text/x-red" data-template-name="audit-log">
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
     <input type="text" id="node-input-name" placeholder="name">
   </div>
   <div class="form-row">
-    <label for="node-input-limit"><i class="fas fa-archive"></i> limit</label>
+    <label for="node-input-limit"><i class="fa fa-archive" aria-hidden="true"></i> limit</label>
     <input type="number" id="node-input-limit" minimum="100" step="100" placeholder="1000">
   </div>
   <div class="form-row">
-    <label for="node-input-profile"><i class="far fa-file-alt"></i> profile</label>
+    <label for="node-input-profile"><i class="fa fa-file-text" aria-hidden="true"></i> profile</label>
     <input type="text" id="node-input-profile" placeholder="default">
   </div>
   <div class="form-row">
@@ -39,14 +55,14 @@
     <label for="node-input-console"><i class="fa fa-list"></i> console?</label>
     <input type="checkbox" id="node-input-console">
   </div>
-  </script>
+</script>
 
-  <style>
-  .param-table table, th, td {
-    vertical-align: top;
-    padding: 3px;
-  }
-  </style>
+<style>
+.param-table table, th, td {
+  vertical-align: top;
+  padding: 3px;
+}
+</style>
 
 <script type="text/x-red" data-help-name="audit-log">
   <h1>Audit Log</h1>
@@ -65,11 +81,11 @@
     <td>Name of node.</td>
    </tr>
    <tr>
-    <td><i class="fa fa-archive"></i> limit</td>
+    <td><i class="fa fa-archive" aria-hidden="true"></i> limit</td>
     <td>Maximum number of messages to cache in RAM.</td>
    </tr>
    <tr>
-    <td><i class="fa fa-file-alt"></i> profile</td>
+    <td><i class="fa fa-file-text" aria-hidden="true"></i> profile</td>
     <td>Name of the profile being tested to attach to log messages.</td>
    </tr>
    <tr>

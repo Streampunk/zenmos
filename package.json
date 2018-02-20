@@ -25,6 +25,8 @@
   "homepage": "https://github.com/Streampunk/zenmos#readme",
   "dependencies": {
     "ajv": "^6.1.1",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
     "yargs": "^11.0.0"
   },
   "devDependencies": {
@@ -36,7 +38,9 @@
     "nodes": {
       "jsonValidator": "nodes/jsonValidator.js",
       "auditLog": "nodes/auditLog.js",
-      "stateStoreRAM": "nodes/stateStoreRAM.js"
+      "stateStoreRAM": "nodes/stateStoreRAM.js",
+      "registrationLogic": "nodes/registrationLogic.js",
+      "nmosHTTPRequest": "nodes/nmosHTTPRequest.js"
     }
   }
 }

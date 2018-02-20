@@ -1,0 +1,96 @@
+<!--
+  Copyright 2018 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('nmos-http-request',{
+      category: 'zenmos',
+      color: '#B19479',
+      defaults: {
+        name: { value : 'Registration' },
+        port: { value : 3101, validate : RED.validators.number() },
+        interface: { value : '0.0.0.0' }, // No validator - allow hostnames
+        base: { value : '/x-nmos/' }
+      },
+      inputs:0,
+      outputs:1,
+      icon: 'white-globe.png',
+      label: function() {
+        return this.name || 'nmos-http-request';
+      }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="nmos-http-request">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="Registration">
+  </div>
+  <div class="form-row">
+    <label for="node-input-port"><i class="fa fa-plug" aria-hidden="true"></i> port</label>
+    <input type="number" id="node-input-port" minimum="1025" placeholder="3101">
+  </div>
+  <div class="form-row">
+    <label for="node-input-interface"><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</label>
+    <input type="text" id="node-input-interface" placeholder="0.0.0.0">
+  </div>
+  <div class="form-row">
+    <label for="node-input-base"><i class="fa fa-road" aria-hidden="true"></i> base path</label>
+    <input type="text" id="node-input-base" placeholder="/x-nmos/">
+  </div>
+</script>
+
+<style>
+.param-table table, th, td {
+  vertical-align: top;
+  padding: 3px;
+}
+</style>
+
+<script type="text/x-red" data-help-name="nmos-http-request">
+  <h1>NMOS HTTP Requests</h1>
+  <p>Run an HTTP server to be either an NMOS Node API, Registration API or Query
+  API endpoint. This Node-RED node listens on the specified port and interface for
+  HTTP requests and sends them on as messages, including the response object for
+  later response. </p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of node.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-plug" aria-hidden="true"></i> port</td>
+    <td>Port to run an NMOS HTTP service on.</td>
+   </tr>
+   <tr>
+     <td><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</td>
+     <td>Interface to provide the HTTP service on. Default is all interfaces
+     <code>0.0.0.0</code>.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-road" aria-hidden="true"></i> base path</td>
+    <td>Path to advertise the NMOS service at. Should always be set to
+    <code>/x-nmos/</code> unless for specialist tests.</td>
+   </tr>
+  </table>
+  </div>
+
+</script>
