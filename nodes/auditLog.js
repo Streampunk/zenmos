@@ -43,10 +43,11 @@ module.exports = function (RED) {
       msg.auditLogName = config.name;
 
       // Work out where the message came from
-      if (msg.req.method) {
+      if (msg.req && msg.req.method) {
         // msg.type = `HTTP ${msg.req.method}`;
         msg.version = msg.req.params.ver ? msg.req.params.ver : 'unknown';
         msg.api = msg.req.params.api ? msg.req.params.api : 'unknown';
+        msg.contentType = msg.req.headers['content-type'];
 
         if (msg.req.method === 'POST' || msg.req.method === 'PUT') {
           if (msg.validated === undefined) {

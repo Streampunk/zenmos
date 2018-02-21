@@ -19,7 +19,8 @@
       category: 'zenmos',
       color: '#B19479',
       defaults: {
-        name: { value : "" }
+        name: { value : "" },
+        ascending: { value : false }
       },
       inputs:1,
       outputs:1,
@@ -34,6 +35,10 @@
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
     <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-ascending"><i class="fa fa-sort-numeric-asc" aria-hidden="true"></i> ascending?</label>
+    <input type="checkbox" id="node-input-ascending">
   </div>
 </script>
 
@@ -61,6 +66,10 @@
    <tr>
     <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
     <td>Name of node.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-sort-numeric-asc" aria-hidden="true"></i> ascending?</td>
+    <td>Check that the version number timestamps for resources are increasing.</td>
    </tr>
   </table>
   </div>

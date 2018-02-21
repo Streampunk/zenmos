@@ -66,7 +66,7 @@ module.exports = function (RED) {
     Promise.all(readSchemas).then(loaded => {
       loaded.forEach(s => { schemas.set(s.v, s.ajv); });
       this.on('input', msg => {
-        if ((msg.type === 'HTTP POST') &&
+        if ((msg.type === 'HTTP REQ POST') &&
           (typeof msg.validated !== 'undefined') && (msg.validated === false)) {
           let resourceType = msg.req.params.resource;
           if (msg.req.params.id) {

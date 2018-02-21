@@ -20,31 +20,76 @@ module.exports = function (RED) {
   const makeKeys = (resourceType, id, version) =>
     [ `${resourceType}_${id}_${version}`, `${resourceType}_${id}` ];
 
+  function extractVersions(v) {
+    var m = v.match(/^([0-9]+):([0-9]+)$/);
+    if (m === null) { return [Number.MAX_SAFE_INTEGER, 0]; }
+    return [+m[1], +m[2]];
+  }
+
+  function compareVersions(l, r) {
+    var lm = extractVersions(l);
+    var rm = extractVersions(r);
+    if (lm[0] < rm[0]) return -1;
+    if (lm[0] > rm[0]) return 1;
+    if (lm[1] < rm[1]) return -1;
+    if (lm[1] > rm[1]) return 1;
+    return 0;
+  }
+
   function StateStoreRAM (config) {
     RED.nodes.createNode(this, config);
 
     this.on('input', msg => {
       if (msg.type === 'store create request') {
-        let resourceType = msg.req.param.resource;
-        let id = msg.payload.id;
-        let resVer = msg.payload.version;
-        let apiVer = msg.payload.params.ver;
+        if (!msg.payload.type) {
+          msg.type = 'store create error';
+          msg.payload = `On resource creation for type ${resourceType}, type field is ${msg.payload.type}.`;
+          return this.send(msg);
+        }
+        let resourceType = msg.payload.type + 's';
+        if (!msg.payload.data) {
+          msg.type = 'store create error';
+          msg.payload = `On resource creation for type ${resourceType}, data field is missing.`;
+          return this.send(msg);
+        }
+        let id = msg.payload.data.id;
+        let resVer = msg.payload.data.version;
+        if (!id || !resVer) {
+          msg.type = 'store create error';
+          msg.payload = `On resource creation for type ${resourceType}, ${!id ? 'id' : 'version'} is missing.`;
+          return this.send(msg);
+        }
+        let apiVer = msg.version;
         let [ storeKey, latestKey ] = makeKeys(resourceType, id, resVer);
+        if (config.ascending && latest.has(latestKey)) {
+          let oldKey = latest.get(latestKey);
+          let oldResVer = oldKey.slice(oldKey.lastIndexOf('_') + 1);
+          if (compareVersions(oldResVer, resVer) === 1) {
+            msg.type = 'store create error';
+            msg.payload = `On resource creation for type ${resourceType}, new version ${resVer} is older than existing version ${oldResVer}.`;
+            return this.send(msg);
+          }
+        }
         if (store.has(storeKey)) {
           msg.type = 'store create error';
-          msg.payload = `Collection ${resourceType} already has an item with ID ${id} and version ${resVer}.`;
+          msg.payload = latest.get(latestKey).startsWith('tombstone') ?
+            `Collection ${resourceType} previously had an item with ID ${id} and version ${resVer}, now marked as deleted.` :
+            `Collection ${resourceType} already has an item with ID ${id} and version ${resVer}.`;
           return this.send(msg);
         }
         store.set(storeKey, msg.payload);
+        msg.update = latest.has(latestKey);
         latest.set(latestKey, storeKey);
         apiVersion.set(storeKey, apiVer);
         msg.storeKey = storeKey;
         msg.store = this; // Send the store so intgrity checks can be made
-        msg.type = 'store create response';
+        msg.req.params.resource = resourceType;
+        msg.payload = msg.payload.data;
+        msg.type = 'store create success';
         return this.send(msg);
       }
       if (msg.type === 'store read request') {
-        let resourceType = msg.req.param.resource;
+        let resourceType = msg.req.params.resource;
         let id = msg.req.params.id;
         if (!id) {
           msg.type = 'store read error';
@@ -57,7 +102,7 @@ module.exports = function (RED) {
           msg.payload = `Read request for a resource from the ${resourceType} that does not exist.`;
           return this.send(msg);
         }
-        if (storeKey === 'tombstone') {
+        if (storeKey.startsWith('tombstone')) {
           msg.type = 'store read error';
           msg.payload = `Read request for a resource from the ${resourceType} this is marked as deleted.`;
           return this.send(msg);
@@ -75,8 +120,8 @@ module.exports = function (RED) {
         return this.send(msg);
       }
       if (msg.type === 'store delete request') {
-        let resourceType = msg.req.param.resource;
-        let id = msg.reg.params.id;
+        let resourceType = msg.req.params.resource;
+        let id = msg.req.params.id;
         if (!id) {
           msg.type = 'store delete error';
           msg.payload = `Delete request for elements from ${resourceType} store without an identier.`;
@@ -88,12 +133,13 @@ module.exports = function (RED) {
           msg.payload = `Request for a resource from the ${resourceType} that does not exist.`;
           return this.send(msg);
         }
-        if (storeKey === 'tombstone') {
+        let oldResVer = storeKey.slice(storeKey.lastIndexOf('_') + 1);
+        if (storeKey.startsWith('tombstone')) {
           msg.type = 'store delete error';
           msg.payload = `Read request for a resource from the ${resourceType} this is marked as deleted.`;
           return this.send(msg);
         }
-        latest.set(`${resourceType}_${id}`, 'tombstone');
+        latest.set(`${resourceType}_${id}`, `tombstone_${oldResVer}`);
         msg.type = 'store delete success';
         return this.send(msg);
       }

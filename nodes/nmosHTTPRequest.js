@@ -67,13 +67,14 @@ module.exports = function (RED) {
 
     const app = express();
     app.use(bodyParser.json());
+    app.use(bodyParser.raw());
 
     this.callback = (req, res) => {
       let msgid = RED.util.generateId();
       res._msgid = msgid;
       if (req.method.match(/^(POST|DELETE|PUT|OPTIONS|PATCH)$/)) {
         this.send({
-          type: `HTTP ${req.method}`,
+          type: `HTTP REQ ${req.method}`,
           _msgid: msgid,
           req: req,
           res: createResponseWrapper(this, res),
@@ -81,7 +82,7 @@ module.exports = function (RED) {
         });
       } else if (req.method ==='GET') {
         this.send({
-          type: 'HTTP GET',
+          type: 'HTTP REQ GET',
           _msgig: msgid,
           req: req,
           res: createResponseWrapper(this, res),
@@ -89,7 +90,7 @@ module.exports = function (RED) {
         });
       } else {
         this.send({
-          type: `HTTP ${req.method}`,
+          type: `HTTP REQ ${req.method}`,
           _msgid: msgid,
           req: req,
           res: createResponseWrapper(this, res)
@@ -101,43 +102,71 @@ module.exports = function (RED) {
 
     app.get(config.base + ':api/:ver', this.callback);
 
+    app.get(config.base + ':api/:ver/resource/:resource?/:id?', (req, res) => {
+      if (!req.params.resource) {
+        req.params.resource = 'resource';
+      }
+      this.callback(req, res);
+    });
+
     app.get(
-      config.base + ':api/:ver/(:resource|health/nodes)/:id?',
-      this.callback);
+      config.base + ':api/:ver/health/nodes/:id', this.callback);
+
+    app.get(
+      config.base + ':api/:ver/:resource/:id?', this.callback);
 
     app.post(config.base + ':api', this.callback);
 
     app.post(config.base + ':api/:ver', this.callback);
 
+    app.post(config.base + ':api/:ver/resource', (req, res) => {
+      req.params.resource = 'resource';
+      this.callback(req, res);
+    });
+
     app.post(
-      config.base + ':api/:ver/(:resource|health/nodes)/:id?',
-      this.callback);
+      config.base + ':api/:ver/health/nodes/:id', this.callback);
 
     app.delete(config.base + ':api', this.callback);
 
     app.delete(config.base + ':api/:ver', this.callback);
 
-    app.delete(
-      config.base + ':api?/:ver?/(:resource|health/nodes)/:id?',
-      this.callback);
+    app.delete(config.base + ':api/:ver/resource/:resource?/:id?', (req, res) => {
+      if (!req.params.resource) {
+        req.params.resource = 'resource';
+      }
+      this.callback(req, res);
+    });
 
     app.use((req, res, next) => {
-      res.status(404).json({
+      let error = {
         code: 404,
         error: `Resource ${req.url} not found.`,
         debug: null
-      });
+      };
+      res.status(404).json(error);
       if (!next) { 3; }
+      let msg = {
+        type : 'HTTP RES 404',
+        payload : error
+      };
+      this.send(msg);
     });
 
     app.use((err, req, res, next) => {
       this.warn(err.stack);
-      res.status(500).json({
-        code: 400,
+      let error = {
+        code: 500,
         error: err.message,
         debug: err.stack
-      });
+      };
+      res.status(500).json(error);
       if (!next) { 3; }
+      let msg = {
+        type : 'HTTP RES 404',
+        payload : error
+      };
+      this.send(msg);
     });
 
     let server = app.listen(config.port, () => {
