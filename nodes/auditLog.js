@@ -29,6 +29,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     this.on('input', msg => {
+      msg = Object.assign({}, msg);
       log.push(msg);
       if (log.length > config.limit && log.length % 10 === 0) {
         log = log.slice(-1000);

@@ -23,6 +23,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     this.on('input', msg => {
+      msg = Object.assign({}, msg);
       let msgType = msg.type;
       // console.log('>>>', msg.req.params);
       if (msg.type.startsWith('store')) {
@@ -40,7 +41,7 @@ module.exports = function (RED) {
           msg.statusCode = msg.update ? 200 : 201;
           msg.type = `HTTP RES ${msg.statusCode}`;
           msg.headers = {
-            'Location': `/x-nmos/${msg.api}/apiVer/${msg.req.params.resource}/${msg.payload.id}`
+            'Location': `/x-nmos/${msg.api}/${msg.version}/resource/${msg.req.params.resource}/${msg.payload.id}`
           };
           return this.send(msg);
         }
@@ -99,7 +100,7 @@ module.exports = function (RED) {
           'HTTP RES 200' : 'HTTP RES 400';
         msg.statusCode = msgType.startsWith('HTTP REQ GET') ? 200 : 400;
         msg.payload = msgType.startsWith('HTTP REQ GET') ?
-          [ 'registration/' ] :
+          [ 'v1.0/', 'v1.1/', 'v1.2/' ] :
           {
             code: 400,
             error: `Received ${msgType} request with no version specified in the path.`,

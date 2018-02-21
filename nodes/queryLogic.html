@@ -15,30 +15,25 @@
 -->
 
 <script type="text/javascript">
-    RED.nodes.registerType('registration-logic',{
+    RED.nodes.registerType('query-logic',{
       category: 'zenmos',
       color: '#B19479',
       defaults: {
-        name: { value : "" },
-        validated: { value: false }
+        name: { value : "" }
       },
       inputs:1,
       outputs:1,
       icon: "inject.png",
       label: function() {
-        return this.name || "registration-logic";
+        return this.name || "query-logic";
       }
     });
 </script>
 
-<script type="text/x-red" data-template-name="registration-logic">
+<script type="text/x-red" data-template-name="query-logic">
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
     <input type="text" id="node-input-name" placeholder="name">
-  </div>
-  <div class="form-row">
-    <label for="node-input-validated"><i class="fa fa-check" aria-hidden="true"></i> validated?</label>
-    <input type="checkbox" id="node-input-validated">
   </div>
 </script>
 
@@ -49,13 +44,11 @@
   }
 </style>
 
-<script type="text/x-red" data-help-name="registration-logic">
-  <h1>Registration Logic</h1>
-  <p>Implementation of the logic aspects of the NMOS registration API. This node processes
+<script type="text/x-red" data-help-name="query-logic">
+  <h1>Query Logic</h1>
+  <p>Implementation of the logic aspects of the NMOS query API. This node processes
   input requests and determines what actions to take, creating appropriate HTTP responses.
   Many of the operations require interaction with current state store.</p>
-
-  <p>Note that heartbeat processing is carried out in a separate node.</p>
 
   <h3>Parameters</h3>
   <div class="param-table">
@@ -66,10 +59,6 @@
    <tr>
     <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
     <td>Name of node.</td>
-   </tr>
-   <tr>
-    <td><i class="fa fa-check" aria-hidden="true"></i> validated?</td>
-    <td>If selected, the logic only runs against validated messages.</td>
    </tr>
   </table>
   </div>

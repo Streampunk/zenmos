@@ -40,6 +40,7 @@
       "auditLog": "nodes/auditLog.js",
       "stateStoreRAM": "nodes/stateStoreRAM.js",
       "registrationLogic": "nodes/registrationLogic.js",
+      "queryLogic": "nodes/queryLogic.js",
       "nmosHTTPRequest": "nodes/nmosHTTPRequest.js"
     }
   }

@@ -40,6 +40,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     this.on('input', msg => {
+      msg = Object.assign({}, msg);
       if (msg.type === 'store create request') {
         if (!msg.payload.type) {
           msg.type = 'store create error';
