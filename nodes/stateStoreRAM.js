@@ -43,6 +43,8 @@ module.exports = function (RED) {
     let ts1 = ts[1].toString();
     return `${ts[0]}:${nineZeros.slice(0, -ts1.length)}${ts1}`;
   };
+  const deref = (o, a) => a.reduce((x, y) => typeof x === 'object' ? x[y] : x, o);
+  const joinKey = a => a.reduce((x, y) => `${x}.${y}`);
 
   function extractVersions(v) {
     if (Array.isArray(v)) return v;
@@ -240,12 +242,11 @@ module.exports = function (RED) {
         results = results.filter(r => // paging since and unitl filters
           compareVersions(since, r.version) < 0 &&
           compareVersions(r.version, until) <= 0);
-        results = results.filter(r => { // basic query filters - object depth 2
+        results = results.filter(r => { // basic query filters
           Object.keys(msg.payload)
             .map(k => k.split('.'))
             .filter(k => r[k[0]] !== undefined)
-            .every(k => k.length === 1 ? r[k[0]] === msg.payload[k[0]] :
-              r[k[0]][k[1]] === msg.payload[`${k[0]}.${k[1]}`]);
+            .every(k => deref(r, k) === msg.payload[joinKey(k)]);
         });
         [ since, until ] = [
           ptpMinusOne(results.slice(-1)[0].version),

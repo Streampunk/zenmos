@@ -19,6 +19,8 @@ module.exports = function (RED) {
   const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2'];
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const unimplementedQueries = [ 'query.rql', 'query.ancestry_id',
+    'query.ancestry_type', 'query.ancestry_generations' ];
 
   function QueryLogic (config) {
     RED.nodes.createNode(this, config);
@@ -55,7 +57,7 @@ module.exports = function (RED) {
             payload: msg.payload,
             debug: msg.req.url
           };
-          return this.send(msg);    
+          return this.send(msg);
         }
         return; // Here endith the store response processing
       }
@@ -138,11 +140,24 @@ module.exports = function (RED) {
       }
 
       if (!msg.req.params.id) {
+        // TODO remove this check when parameters are supported
+        let notImplemented = Object.keys(msg.payload)
+          .filter(k => unimplementedQueries.indexOf[k] >= 0);
+        if (notImplemented.length > 0) {
+          msg.type = 'HTTP RES 501';
+          msg.statusCode = 501;
+          msg.payload = {
+            code: 501,
+            error: `The query parameter ${notImplemented[0]} is not implemented.`,
+            debug: msg.req.url
+          };
+          return this.send(msg);
+        }
         msg.type = 'store query request';
         return this.send(msg);
       }
 
-      if (msg.req.params.id.match(uuidPattern) === null) {
+      if (!uuidPattern.test(msg.req.params.id)) {
         msg.type = 'HTTP REQ 400';
         msg.statusCode = 400;
         msg.payload = {
