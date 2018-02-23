@@ -16,8 +16,9 @@
 module.exports = function (RED) {
   const knownResources =
     [ 'nodes', 'devices', 'sources', 'flows', 'senders', 'receivers'];
+  const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2'];
   const uuidPattern =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
 
   function QueryLogic (config) {
     RED.nodes.createNode(this, config);
@@ -26,7 +27,36 @@ module.exports = function (RED) {
       msg = Object.assign({}, msg);
       let msgType = msg.type;
       // console.log('>>>', msg.req.params);
-      if (msg.type.startsWith('store')) {
+      if (msg.type.startsWith('store') && msg.api === 'query') {
+        if (msg.type === 'store read success') {
+          msg.type = 'HTTP RES 200';
+          msg.statusCode = 200;
+          return this.send(msg);
+        }
+        if (msg.type === 'store read error') {
+          msg.type = 'HTTP RES 404';
+          msg.statusCode = 404;
+          msg.payload = {
+            code: 404,
+            payload: msg.payload,
+            debug: msg.req.url
+          };
+          return this.send(msg);
+        }
+        if (msg.type === 'store query response') {
+          msg.type = 'HTTP RES 200';
+          msg.statusCode = 200;
+          return this.send(msg);
+        }
+        if (msg.type === 'store query error') {
+          msg.type = `HTTP RES ${msg.statusCode}`;
+          msg.payload = {
+            code: msg.statusCode,
+            payload: msg.payload,
+            debug: msg.req.url
+          };
+          return this.send(msg);    
+        }
         return; // Here endith the store response processing
       }
       if (!msg.type.startsWith('HTTP REQ')) {
@@ -45,6 +75,11 @@ module.exports = function (RED) {
           }; // TODO if query is supported, add to list
         return this.send(msg);
       }
+      if (msg.api !== 'query') {
+        // TODO what to do if nothing responds?
+        return; // Only process query messages
+      }
+
       if (msg.version === 'unknown') { // Requesting which versions are supported
         msg.type = msgType.startsWith('HTTP REQ GET') ?
           'HTTP RES 200' : 'HTTP RES 400';
@@ -58,9 +93,16 @@ module.exports = function (RED) {
           }; // TODO if registration is supported, add to list
         return this.send(msg);
       }
-      if (msg.api !== 'query') {
-        // TODO what to do if nothing responds?
-        return; // Only process query messages
+
+      if (supportedVersions.indexOf(msg.version) < 0) {
+        msg.type = 'HTTP RES 400';
+        msg.statusCode = 400;
+        msg.payload = {
+          code: 400,
+          error: `Specified version number '${msg.version}' is not supported.`,
+          debug: msg.req.url
+        };
+        return this.send(msg);
       }
 
       if (!msg.req.params.resource) { // Query API base path request
@@ -96,7 +138,7 @@ module.exports = function (RED) {
       }
 
       if (!msg.req.params.id) {
-        msg.type = 'store query resources';
+        msg.type = 'store query request';
         return this.send(msg);
       }
 

@@ -17,7 +17,7 @@ module.exports = function (RED) {
   const knownResources =
     [ 'nodes', 'devices', 'sources', 'flows', 'senders', 'receivers'];
   const uuidPattern =
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
 
   function RegistrationLogic (config) {
     RED.nodes.createNode(this, config);
@@ -26,7 +26,7 @@ module.exports = function (RED) {
       msg = Object.assign({}, msg);
       let msgType = msg.type;
       // console.log('>>>', msg.req.params);
-      if (msg.type.startsWith('store')) {
+      if (msg.type.startsWith('store') && msg.api === 'registration') {
         if (msg.type === 'store create error') {
           msg.type = 'HTTP RES 400';
           msg.statusCode = 400;
@@ -178,7 +178,7 @@ module.exports = function (RED) {
         return this.send(msg);
       }
 
-      if (msg.req.params.id.match(uuidPattern) === null) {
+      if (!uuidPattern.test(msg.req.params.id)) {
         msg.type = 'HTTP RES 400';
         msg.statusCode = 400;
         msg.payload = {

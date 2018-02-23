@@ -13,18 +13,51 @@
   limitations under the License.
 */
 
+const PAGING_LIMIT = 10;
+
 module.exports = function (RED) {
   const store = new Map; // Store of all NMOS resource
   const latest = new Map; // Store of pointers to the latest version
-  const apiVersion = new Map; // Map of API version claimed for the item
   const makeKeys = (resourceType, id, version) =>
     [ `${resourceType}_${id}_${version}`, `${resourceType}_${id}` ];
+  const stampPattern = /^([0-9]+):([0-9]+)$/;
+  const versionPattern = /^v[0-9]+.[0-9]+$/;
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const queryParamTests = [
+    { name : 'paging.since', test : v => stampPattern.test(v) },
+    { name : 'paging.until', test : v => stampPattern.test(v) },
+    { name : 'paging.limit', transform : v => +v,
+      test : v => !isNaN(v) && v > 0 },
+    { name : 'paging.order', test : v => v === 'create' || v === 'update' },
+    { name : 'query.downgrade', test : v => versionPattern.test(v) },
+    { name : 'query.rql', test : v => v.length > 0 },
+    { name : 'query.ancestry_id', test : v => uuidPattern.test(v) },
+    { name : 'query.ancestry_type', test : v => v === 'parents' || v === 'children' },
+    { name : 'query.ancestry_generations', transform : v => + v,
+      test : v => !isNaN(v) && v >= 0 }
+  ];
+  const nineZeros = '000000000';
+  const formatTS = ts => {
+    ts = extractVersions(ts);
+    let ts1 = ts[1].toString();
+    return `${ts[0]}:${nineZeros.slice(0, -ts1.length)}${ts1}`;
+  };
 
   function extractVersions(v) {
-    var m = v.match(/^([0-9]+):([0-9]+)$/);
-    if (m === null) { return [Number.MAX_SAFE_INTEGER, 0]; }
+    if (Array.isArray(v)) return v;
+    var m = stampPattern.exec(v);
+    if (m === null) { return typeof v === 'number' ?
+      [v / 1000 | 0, (v % 1000) * 1000000 | 0] : [Number.MAX_SAFE_INTEGER, 0]; }
     return [+m[1], +m[2]];
   }
+
+  const ptpMinusOne = ts => {
+    let [ ts1, ts2 ] = extractVersions(ts);
+    ts2 = ts2 - 1;
+    if (ts2 === -1) { ts1 = ts1 - 1; ts2 = 0; }
+    return [ ts1, ts2 ];
+  };
 
   function compareVersions(l, r) {
     var lm = extractVersions(l);
@@ -63,7 +96,7 @@ module.exports = function (RED) {
         let apiVer = msg.version;
         let [ storeKey, latestKey ] = makeKeys(resourceType, id, resVer);
         if (config.ascending && latest.has(latestKey)) {
-          let oldKey = latest.get(latestKey);
+          let oldKey = latest.get(latestKey).key;
           let oldResVer = oldKey.slice(oldKey.lastIndexOf('_') + 1);
           if (compareVersions(oldResVer, resVer) === 1) {
             msg.type = 'store create error';
@@ -73,15 +106,20 @@ module.exports = function (RED) {
         }
         if (store.has(storeKey)) {
           msg.type = 'store create error';
-          msg.payload = latest.get(latestKey).startsWith('tombstone') ?
+          msg.payload = latest.get(latestKey).key.startsWith('tombstone') ?
             `Collection ${resourceType} previously had an item with ID ${id} and version ${resVer}, now marked as deleted.` :
             `Collection ${resourceType} already has an item with ID ${id} and version ${resVer}.`;
           return this.send(msg);
         }
-        store.set(storeKey, msg.payload);
+        store.set(storeKey, msg.payload.data);
         msg.update = latest.has(latestKey);
-        latest.set(latestKey, storeKey);
-        apiVersion.set(storeKey, apiVer);
+        let timeNow = Date.now();
+        latest.set(latestKey, {
+          key: storeKey,
+          apiVersion: apiVer,
+          updateTime: timeNow,
+          createdTime: msg.update ? latest.get(latestKey).createdTime : timeNow
+        });
         msg.storeKey = storeKey;
         msg.store = this; // Send the store so intgrity checks can be made
         msg.req.params.resource = resourceType;
@@ -97,7 +135,8 @@ module.exports = function (RED) {
           msg.payload = `Read request for elements from ${resourceType} store without an identier.`;
           return this.send(msg);
         }
-        let storeKey = latest.get(`${resourceType}_${id}`);
+        let { key: storeKey, apiVersion: apiVer } =
+          latest.get(`${resourceType}_${id}`);
         if (!storeKey) {
           msg.type = 'store read error';
           msg.payload = `Read request for a resource from the ${resourceType} that does not exist.`;
@@ -117,7 +156,7 @@ module.exports = function (RED) {
         msg.type = 'store read success';
         msg.payload = result;
         msg.storeKey = storeKey;
-        msg.apiVersion = apiVersion.get(storeKey);
+        msg.apiVersion = apiVer;
         return this.send(msg);
       }
       if (msg.type === 'store delete request') {
@@ -128,32 +167,115 @@ module.exports = function (RED) {
           msg.payload = `Delete request for elements from ${resourceType} store without an identier.`;
           return this.send(msg);
         }
-        let storeKey = latest.get(`${resourceType}_${id}`);
-        if (!storeKey) {
+        let latestKey = `${resourceType}_${id}`;
+        if (!latest.has(latestKey)) {
           msg.type = 'store delete error';
           msg.payload = `Request for a resource from the ${resourceType} that does not exist.`;
           return this.send(msg);
         }
+        let { key: storeKey, createdTime: createdTime } = latest.get(latestKey);
+
         let oldResVer = storeKey.slice(storeKey.lastIndexOf('_') + 1);
         if (storeKey.startsWith('tombstone')) {
           msg.type = 'store delete error';
           msg.payload = `Read request for a resource from the ${resourceType} this is marked as deleted.`;
           return this.send(msg);
         }
-        latest.set(`${resourceType}_${id}`, `tombstone_${oldResVer}`);
+        latest.set(latestKey, {
+          key: `tombstone_${oldResVer}`,
+          apiVersion: msg.version,
+          updatedTime: Date.now(),
+          createdTime: createdTime
+        });
         msg.type = 'store delete success';
         return this.send(msg);
       }
-      // if (msg.type === 'store query request') {
-      // Check query parameters in payload and search the store wrt the logic.
-      //}
+
+      let testQueryParam = (name, test) => {
+        let value = msg.payload[name];
+        if (value === undefined) return true;
+        if (test(value)) {
+          return true;
+        } else {
+          msg.type = 'store query error';
+          msg.statusCode = 400;
+          msg.payload = `On a query of the ${msg.req.params.resource}, query parameter '${name}' with value '${value}' is not valid.`;
+          return false;
+        }
+      };
+
+      if (msg.type === 'store query request') {
+        let resourceType = msg.req.params.resource;
+        let results = [];
+        for ( let t of queryParamTests) {
+          if (t.transform && msg.payload[t.name]) {
+            msg.payload[t.name] = t.transform(msg.payload[t.name]);
+          }
+        }
+        if (!queryParamTests.every(t => testQueryParam(t.name, t.test))) {
+          return this.send(msg);
+        }
+        let limit = msg.payload['paging.limit'] ?
+          msg.payload['paging.limit'] : PAGING_LIMIT;
+        let timeKey = msg.payload['paging.order'] === 'create' ?
+          'createdTime' : 'updateTime';
+        let since = msg.payload['paging.since'] ?
+          extractVersions(msg.payload['paging.since']) : [0, 0];
+        let until = msg.payload['paging.until'] ?
+          extractVersions(msg.payload['paging.until']) :
+          [Number.MAX_SAFE_INTEGER, 0];
+        // Filter out nodes of a given type
+        for ( let [k, v] of latest ) {
+          if (k.startsWith(resourceType)) {
+            if (!v.key.startsWith('tombstone')) {
+              results.push(v);
+            }
+          }
+        }
+
+        // Reverse sort ... it's in a documentation note
+        results = results.sort((l, r) => compareVersions(r[timeKey], l[timeKey]));
+        results = results.map(r => store.get(r.key));
+        let [ first, last ] = [ results.slice(-1)[0].version, results[0].version ];
+        results = results.filter(r => // paging since and unitl filters
+          compareVersions(since, r.version) < 0 &&
+          compareVersions(r.version, until) <= 0);
+        results = results.filter(r => { // basic query filters - object depth 2
+          Object.keys(msg.payload)
+            .map(k => k.split('.'))
+            .filter(k => r[k[0]] !== undefined)
+            .every(k => k.length === 1 ? r[k[0]] === msg.payload[k[0]] :
+              r[k[0]][k[1]] === msg.payload[`${k[0]}.${k[1]}`]);
+        });
+        [ since, until ] = [
+          ptpMinusOne(results.slice(-1)[0].version),
+          results[0].version ];
+        // 'since' takes precedence and we're in reverse ... another documentation note
+        results = results.slice(-limit);
+        let linkBase = // TODO when should this be https?
+          `<http://${msg.req.host}/x-nmos/query/${msg.version}/${resourceType}/?`;
+        let link =
+          `${linkBase}paging.until=${formatTS(since)}&paging.limit=${limit}>; rel="prev", ` +
+          `${linkBase}paging.since=${formatTS(until)}&paging.limit=${limit}>; rel="next", ` +
+          `${linkBase}paging.since=${formatTS(ptpMinusOne(first))}&paging.limit=${limit}>; rel="first", ` +
+          `${linkBase}paging.until=${last}&paging.limit=${limit}>; rel="last"`;
+        msg.type = 'store query response';
+        msg.payload = results;
+        msg.headers = {
+          'Link': link,
+          'X-Paging-Limit': limit.toString(),
+          'X-Paging-Since': formatTS(ptpMinusOne(since)),
+          'X-Paging-Until': formatTS(until)
+        };
+
+        return this.send(msg);
+      }
       // TODO - send on other messages?
     });
 
     this.on('close', () => {
       store.clear();
       latest.clear();
-      apiVersion.clear();
     });
   }
   RED.nodes.registerType('state-store-RAM', StateStoreRAM);
