@@ -38,6 +38,7 @@ module.exports = function (RED) {
       test : v => !isNaN(v) && v >= 0 }
   ];
   const nineZeros = '000000000';
+  // const maxPTP = `${Number.MAX_SAFE_INTEGER}:000000000`;
   const formatTS = ts => {
     ts = extractVersions(ts);
     let ts1 = ts[1].toString();
@@ -137,11 +138,16 @@ module.exports = function (RED) {
           msg.payload = `Read request for elements from ${resourceType} store without an identier.`;
           return this.send(msg);
         }
-        let { key: storeKey, apiVersion: apiVer } =
-          latest.get(`${resourceType}_${id}`);
+        let latestKey = `${resourceType}_${id}`;
+        if (!latest.has(latestKey)) {
+          msg.type = 'store read error';
+          msg.payload = `Read request for a resource from the ${resourceType} with id '${id}' that does not exist.`;
+          return this.send(msg);
+        }
+        let { key: storeKey, apiVersion: apiVer } = latest.get(latestKey);
         if (!storeKey) {
           msg.type = 'store read error';
-          msg.payload = `Read request for a resource from the ${resourceType} that does not exist.`;
+          msg.payload = `Read request for a resource from the ${resourceType} with id '${id}' that is not stored.`;
           return this.send(msg);
         }
         if (storeKey.startsWith('tombstone')) {
@@ -238,7 +244,9 @@ module.exports = function (RED) {
         // Reverse sort ... it's in a documentation note
         results = results.sort((l, r) => compareVersions(r[timeKey], l[timeKey]));
         results = results.map(r => store.get(r.key));
-        let [ first, last ] = [ results.slice(-1)[0].version, results[0].version ];
+        let [ first, last ] = results.length > 0 ?
+          [ results.slice(-1)[0].version, results[0].version ] :
+          [ undefined, undefined ];
         results = results.filter(r => // paging since and unitl filters
           compareVersions(since, r.version) < 0 &&
           compareVersions(r.version, until) <= 0);
@@ -248,26 +256,33 @@ module.exports = function (RED) {
             .filter(k => r[k[0]] !== undefined)
             .every(k => deref(r, k) === msg.payload[joinKey(k)]);
         });
-        [ since, until ] = [
-          ptpMinusOne(results.slice(-1)[0].version),
-          results[0].version ];
-        // 'since' takes precedence and we're in reverse ... another documentation note
         results = results.slice(-limit);
-        let linkBase = // TODO when should this be https?
-          `<http://${msg.req.host}/x-nmos/query/${msg.version}/${resourceType}/?`;
-        let link =
-          `${linkBase}paging.until=${formatTS(since)}&paging.limit=${limit}>; rel="prev", ` +
-          `${linkBase}paging.since=${formatTS(until)}&paging.limit=${limit}>; rel="next", ` +
-          `${linkBase}paging.since=${formatTS(ptpMinusOne(first))}&paging.limit=${limit}>; rel="first", ` +
-          `${linkBase}paging.until=${last}&paging.limit=${limit}>; rel="last"`;
+        [ since, until ] = results.length > 0 ?
+          [ ptpMinusOne(results.slice(-1)[0].version), results[0].version ] :
+          [ undefined, undefined ];
+        // 'since' takes precedence and we're in reverse ... another documentation note
+
+        if (first) {
+          let linkBase = // TODO when should this be https?
+            `<http://${msg.req.headers.host}/x-nmos/query/${msg.version}/${resourceType}/?`;
+          let link =
+            (since ? `${linkBase}paging.until=${formatTS(since)}&paging.limit=${limit}>; rel="prev", ` : '') +
+            (until ? `${linkBase}paging.since=${formatTS(until)}&paging.limit=${limit}>; rel="next", ` : '') +
+            `${linkBase}paging.since=${formatTS(ptpMinusOne(first))}&paging.limit=${limit}>; rel="first", ` +
+            `${linkBase}paging.until=${last}&paging.limit=${limit}>; rel="last"`;
+          msg.headers = {
+            'Link': link,
+            'X-Paging-Limit': limit.toString(),
+            'X-Paging-Since': formatTS(ptpMinusOne(since)),
+            'X-Paging-Until': formatTS(until)
+          };
+        } else {
+          msg.headers = {
+            'X-Paging-Limit': limit.toString()
+          };
+        }
         msg.type = 'store query response';
         msg.payload = results;
-        msg.headers = {
-          'Link': link,
-          'X-Paging-Limit': limit.toString(),
-          'X-Paging-Since': formatTS(ptpMinusOne(since)),
-          'X-Paging-Until': formatTS(until)
-        };
 
         return this.send(msg);
       }

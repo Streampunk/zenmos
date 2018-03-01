@@ -158,7 +158,7 @@ module.exports = function (RED) {
       }
 
       if (!uuidPattern.test(msg.req.params.id)) {
-        msg.type = 'HTTP REQ 400';
+        msg.type = 'HTTP RES 400';
         msg.statusCode = 400;
         msg.payload = {
           code: 400,
