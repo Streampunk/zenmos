@@ -26,9 +26,10 @@
   "dependencies": {
     "ajv": "^6.1.1",
     "body-parser": "^1.18.2",
+    "digd.js": "https://git.coolaj86.com/scriptorian/digd.js/archive/master.tar.gz",
     "express": "^4.16.2",
-    "yargs": "^11.0.0",
-    "digd.js": "https://git.coolaj86.com/scriptorian/digd.js/archive/master.tar.gz"
+    "uuid": "^3.2.1",
+    "yargs": "^11.0.0"
   },
   "devDependencies": {
     "eslint": "^4.9.0",
@@ -43,7 +44,8 @@
       "registrationLogic": "nodes/registrationLogic.js",
       "queryLogic": "nodes/queryLogic.js",
       "nmosHTTPRequest": "nodes/nmosHTTPRequest.js",
-      "dns-sd": "nodes/dns-sd.js"
+      "dns-sd": "nodes/dns-sd.js",
+      "nodeLogid": "nodes/nodeLogic.js"
     }
   }
 }
