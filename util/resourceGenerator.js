@@ -39,16 +39,8 @@ const selfMaker = config => ({
   caps: {},
   href: 'http://172.29.80.65:12345/',
   api: config.nmosVersion === 'v10' ? undefined : {
-    versions: [ 'v1.0', 'v1.1', 'v1.2' ],
-    endpoints: [ {
-      host: '172.29.80.65',
-      port: 12345,
-      protocol: 'http'
-    }, {
-      host: '172.29.80.65',
-      port: 443,
-      protocol: 'https'
-    } ]
+    versions: config.versions,
+    endpoints: []
   },
   services: [ {
     href: 'http://172.29.80.65:12345/x-manufacturer/pipelinemanager/',
@@ -74,15 +66,7 @@ const selfMaker = config => ({
     gmid: '08-00-11-ff-fe-21-e1-b0',
     locked: true
   } ],
-  interfaces: config.nmosVersion === 'v10' ? undefined : [ {
-    name: 'eth0',
-    chassis_id: '74-26-96-db-87-31',
-    port_id: '74-26-96-db-87-31'
-  }, {
-    name: 'eth1',
-    chassis_id: '74-26-96-db-87-31',
-    port_id: '74-26-96-db-87-32'
-  } ]
+  interfaces: config.nmosVersion === 'v10' ? undefined : []
 });
 const deviceMaker = config => ({
   receivers: [],
@@ -193,11 +177,14 @@ const receiverMaker = config => ({
   device_id: findOne('devices', config)
 });
 
+
+
 module.exports = {
   selfMaker,
   deviceMaker,
   sourceMaker,
   flowMaker,
   senderMaker,
-  receiverMaker
+  receiverMaker,
+  versionTS : () => formatTS(dateNow())
 };

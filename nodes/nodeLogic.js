@@ -15,7 +15,7 @@
 
 const uuidv4 = require('uuid/v4');
 const { selfMaker, deviceMaker, sourceMaker, flowMaker,
-  senderMaker, receiverMaker} = require('../util/resourceGenerator.js');
+  senderMaker, receiverMaker, versionTS } = require('../util/resourceGenerator.js');
 
 module.exports = function (RED) {
   const knownResources =
@@ -23,6 +23,9 @@ module.exports = function (RED) {
   const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2'];
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const flattenIFs = i => Object.entries(i).reduce((x, [k, v]) =>
+    x.concat(v.map(z =>
+      Object.assign(z, {name : k}))), []);
   const store = new Map; // current internal state of the node
 
   function NodeLogic (config) {
@@ -43,27 +46,57 @@ module.exports = function (RED) {
       break;
     }
     config.entries = () => store.entries();
-    let selfKey = `self+${config.selfID}`;
+    let selfKey = `self_${config.selfID}`;
     (s => store.set(selfKey, s))(selfMaker(config));
-    for ( let x = 0 ; x < config.devices ; x++ ) {
+    for ( let x = 0 ; x < +config.devices ; x++ ) {
       (s => store.set(`devices_${s.id}`, s))(deviceMaker(config));
     }
-    for ( let x = 0 ; x < config.sources ; x++ ) {
+    for ( let x = 0 ; x < +config.sources ; x++ ) {
       (s => store.set(`sources_${s.id}`, s))(sourceMaker(config));
     }
-    for ( let x = 0 ; x < config.flows ; x++ ) {
+    for ( let x = 0 ; x < +config.flows ; x++ ) {
       (s => store.set(`flows_${s.id}`, s))(flowMaker(config));
     }
-    for ( let x = 0 ; x < config.senders ; x++ ) {
+    for ( let x = 0 ; x < +config.senders ; x++ ) {
       (s => store.set(`senders_${s.id}`, s))(senderMaker(config));
     }
-    for ( let x = 0 ; x < config.receivers ; x++ ) {
+    for ( let x = 0 ; x < +config.receivers ; x++ ) {
       (s => store.set(`receivers_${s.id}`, s))(receiverMaker(config));
     }
 
     this.on('input', msg => {
       msg = Object.assign({}, msg);
       let msgType = msg.type;
+
+      if (msg.type === 'endpoint started') {
+        let self = store.get(selfKey);
+        let flatIFs = flattenIFs(msg.payload.interfaces)
+          .filter(i => !i.internal)
+          .filter(i => msg.payload.interface === '0.0.0.0' ||
+            msg.payload.interface === i.address );
+        let macs = flattenIFs(msg.payload.interfaces)
+          .filter(i => !i.internal)
+          .reduce((x, y) => { x[y.name] = y.mac; return x; }, {});
+        let myNewSelf = Object.assign(self, {
+          version: versionTS(),
+          api: config.nmosVersion === 'v10' ? undefined : {
+            versions: config.versions,
+            endpoints: self.api.endpoints.concat(flatIFs.map(i => ({
+              host: i.address,
+              port: msg.payload.port,
+              protocol: msg.payload.protocol
+            })))
+          },
+          interfaces: config.nmosVersion === 'v10' ? undefined :
+            self.interfaces.concat(Object.entries(macs).map(([k, v]) => ({
+              name: k,
+              chassis_id: v.replace(/:/g, '-'),
+              port_id: v.replace(/:/g, '-')
+            })))
+        });
+        store.set(selfKey, myNewSelf);
+        return;
+      }
 
       if (!msg.type.startsWith('HTTP REQ')) {
         return; // Only process HTTP messages
@@ -161,7 +194,7 @@ module.exports = function (RED) {
         }
         msg.payload = [];
         for ( let [k, v] of store ) {
-          if (k.startsWith('msg.req.params.resource')) {
+          if (k.startsWith(msg.req.params.resource)) {
             msg.payload.push(v);
           }
         }

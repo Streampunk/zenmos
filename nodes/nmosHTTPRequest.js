@@ -15,6 +15,7 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const os = require('os');
 
 module.exports = function (RED) {
 
@@ -171,6 +172,16 @@ module.exports = function (RED) {
 
     let server = app.listen(config.port, () => {
       this.log(`NMOS HTTP server ${config.name} is running on port ${config.port}.`);
+      let msg = {
+        type: 'endpoint started',
+        payload: {
+          port: config.port,
+          protocol: 'http',
+          interface: config.interface,
+          interfaces: os.networkInterfaces()
+        }
+      };
+      this.send(msg);
     });
 
     this.on('close', done => {
