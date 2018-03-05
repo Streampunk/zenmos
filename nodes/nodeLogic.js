@@ -15,21 +15,24 @@
 
 const uuidv4 = require('uuid/v4');
 const { selfMaker, deviceMaker, sourceMaker, flowMaker,
-  senderMaker, receiverMaker, versionTS } = require('../util/resourceGenerator.js');
+  senderMaker, receiverMaker } = require('../util/resourceGenerator.js');
+const { versionTS, compareVersions } = require('../util/ptpMaths.js');
 
 module.exports = function (RED) {
   const knownResources =
     [ 'self', 'devices', 'sources', 'flows', 'senders', 'receivers'];
-  const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2'];
+  const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2' ];
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
   const flattenIFs = i => Object.entries(i).reduce((x, [k, v]) =>
     x.concat(v.map(z =>
       Object.assign(z, {name : k}))), []);
-  const store = new Map; // current internal state of the node
 
   function NodeLogic (config) {
     RED.nodes.createNode(this, config);
+    this.store = new Map; // current internal state of the node
+    this.since = '0:0';
+    this.nmosVersion = config.nmosVersion;
 
     if (!config.selfID) {
       config.selfID = uuidv4();
@@ -45,31 +48,32 @@ module.exports = function (RED) {
       config.versions = supportedVersions;
       break;
     }
-    config.entries = () => store.entries();
+    config.entries = () => this.store.entries();
     let selfKey = `self_${config.selfID}`;
-    (s => store.set(selfKey, s))(selfMaker(config));
+    (s => this.store.set(selfKey, s))(selfMaker(config));
     for ( let x = 0 ; x < +config.devices ; x++ ) {
-      (s => store.set(`devices_${s.id}`, s))(deviceMaker(config));
+      (s => this.store.set(`devices_${s.id}`, s))(deviceMaker(config));
     }
     for ( let x = 0 ; x < +config.sources ; x++ ) {
-      (s => store.set(`sources_${s.id}`, s))(sourceMaker(config));
+      (s => this.store.set(`sources_${s.id}`, s))(sourceMaker(config));
     }
     for ( let x = 0 ; x < +config.flows ; x++ ) {
-      (s => store.set(`flows_${s.id}`, s))(flowMaker(config));
+      (s => this.store.set(`flows_${s.id}`, s))(flowMaker(config));
     }
     for ( let x = 0 ; x < +config.senders ; x++ ) {
-      (s => store.set(`senders_${s.id}`, s))(senderMaker(config));
+      (s => this.store.set(`senders_${s.id}`, s))(senderMaker(config));
     }
     for ( let x = 0 ; x < +config.receivers ; x++ ) {
-      (s => store.set(`receivers_${s.id}`, s))(receiverMaker(config));
+      (s => this.store.set(`receivers_${s.id}`, s))(receiverMaker(config));
     }
+    this.sendUpdates(false);
 
     this.on('input', msg => {
       msg = Object.assign({}, msg);
       let msgType = msg.type;
 
       if (msg.type === 'endpoint started') {
-        let self = store.get(selfKey);
+        let self = this.store.get(selfKey);
         let flatIFs = flattenIFs(msg.payload.interfaces)
           .filter(i => !i.internal)
           .filter(i => msg.payload.interface === '0.0.0.0' ||
@@ -79,6 +83,7 @@ module.exports = function (RED) {
           .reduce((x, y) => { x[y.name] = y.mac; return x; }, {});
         let myNewSelf = Object.assign(self, {
           version: versionTS(),
+          href: `${msg.payload.protocol}://${flatIFs[0].address}:${msg.payload.port}/`,
           api: config.nmosVersion === 'v10' ? undefined : {
             versions: config.versions,
             endpoints: self.api.endpoints.concat(flatIFs.map(i => ({
@@ -94,7 +99,7 @@ module.exports = function (RED) {
               port_id: v.replace(/:/g, '-')
             })))
         });
-        store.set(selfKey, myNewSelf);
+        this.store.set(selfKey, myNewSelf);
         return;
       }
 
@@ -189,11 +194,11 @@ module.exports = function (RED) {
         msg.type = 'HTTP RES 200';
         msg.statusCode = 200;
         if (msg.req.params.resource === 'self') {
-          msg.payload = store.get(selfKey);
+          msg.payload = this.store.get(selfKey);
           return this.send(msg);
         }
         msg.payload = [];
-        for ( let [k, v] of store ) {
+        for ( let [k, v] of this.store ) {
           if (k.startsWith(msg.req.params.resource)) {
             msg.payload.push(v);
           }
@@ -224,7 +229,7 @@ module.exports = function (RED) {
       }
 
       let storeKey = `${msg.req.params.resource}_${msg.req.params.id}`;
-      let resource = store.get(storeKey);
+      let resource = this.store.get(storeKey);
       if (resource) {
         msg.type = 'HTTP RES 200';
         msg.statusCode = 200;
@@ -245,8 +250,66 @@ module.exports = function (RED) {
     });
 
     this.on('close', () => {
-      store.clear();
+      this.store.clear();
     });
   }
   RED.nodes.registerType('node-logic', NodeLogic);
+
+  NodeLogic.prototype.createResource = function (type, resource) {
+    let resKey = `${type}_${resource.id}`;
+    if (this.store.has(resKey)) {
+      throw new Error(`On resource creation, Node API collection of ${type} already has resource with id '${resource.id}'.`);
+    }
+    this.store.set(resKey, resource);
+    this.sendUpdates(false);
+  };
+  NodeLogic.prototype.updateResource = function (type, resource) {
+    let resKey = `${type}_${resource.id}`;
+    if (!this.store.has(resKey)) {
+      throw new Error(`On resource update, Node API collection of ${type} does not have a resource with id '${resource.id}'.`);
+    }
+    this.store.set(resKey, resource);
+    this.sendUpdates(true);
+  };
+  NodeLogic.prototype.deleteResource = function (type, id) {
+    let resKey = `${type}_${id}`;
+    if (!this.store.has(resKey)) {
+      throw new Error(`On resource delete, Node API collection of ${type} does not have a resource with id '${id}'.`);
+    }
+    return this.store.delete(resKey);
+  };
+  NodeLogic.prototype.readResource = function (type, id) {
+    let resKey = `${type}_${id}`;
+    if (!this.store.has(resKey)) {
+      throw new Error(`On resource read, Node API colleciton of ${type} does not have a resource with id '${id}'.`);
+    }
+    return this.store.get(resKey);
+  };
+  NodeLogic.prototype.countResource = function (type) {
+    let count = 0;
+    for ( let [k, ] of this.store ) {
+      if (k.startsWith(type)) count++;
+    }
+    return count;
+  };
+  NodeLogic.prototype.sendUpdates = function (update = false) {
+    let max = this.since;
+    for ( let [k, v] of this.store ) {
+      if (v.version && compareVersions(v.version, this.since) >= 0) {
+        let msg = {
+          type: 'HTTP REQ POST',
+          url: `:registration/x-nmos/registration/${this.nmosVersion}/resource`,
+          method: 'POST',
+          payload: {
+            type: k.split('_')[0].replace(/self/, 'node'),
+            data: v
+          },
+          update: update
+        };
+        this.send(msg);
+        max = compareVersions(max, v.version) >= 0 ? max : v.version;
+      }
+    }
+    this.since = max;
+  };
 };

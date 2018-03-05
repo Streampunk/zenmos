@@ -15,13 +15,8 @@
 
 const uuidv4 = require('uuid/v4');
 const os = require('os');
+const { versionTS } = require('./ptpMaths.js');
 
-const dateNow = () => (d => [ d / 1000 | 0, d % 1000 * 1000000])(Date.now());
-const nineZeros = '000000000';
-const formatTS = ts => {
-  let ts1 = ts[1].toString();
-  return `${ts[0]}:${nineZeros.slice(0, -ts1.length)}${ts1}`;
-};
 const findOne = (type, config) => {
   let a = [];
   if (!config && !config.entries) { return undefined; }
@@ -34,7 +29,7 @@ const findOne = (type, config) => {
 };
 
 const selfMaker = config => ({
-  version: formatTS(dateNow()),
+  version: versionTS(),
   hostname: config.hostname ? config.hostname : os.hostname(),
   caps: {},
   href: 'http://172.29.80.65:12345/',
@@ -73,7 +68,7 @@ const deviceMaker = config => ({
   label: 'pipeline 1 default device',
   description: 'pipeline 1 default device',
   tags: {},
-  version: formatTS(dateNow()),
+  version: versionTS(),
   id: uuidv4(),
   type: 'urn:x-nmos:device:pipeline',
   senders: [],
@@ -96,7 +91,7 @@ const sourceMaker = config => ({
   },
   format: 'urn:x-nmos:format:video',
   caps: {},
-  version: formatTS(dateNow()),
+  version: versionTS(),
   parents: [],
   label: 'CaptureCardSourceVideo',
   id: uuidv4(),
@@ -108,7 +103,7 @@ const flowMaker = config => ({
   tags: {},
   format: 'urn:x-nmos:format:video',
   label: 'Test Card',
-  version: formatTS(dateNow()),
+  version: versionTS(),
   parents: [],
   source_id: findOne('sources', config),
   device_id: findOne('devices', config), // TODO make this the sources flow
@@ -138,7 +133,7 @@ const flowMaker = config => ({
 const senderMaker = config => ({
   description: 'Test Card',
   label: 'Test Card',
-  version: formatTS(dateNow()),
+  version: versionTS(),
   manifest_href: 'http://172.29.80.65/x-manufacturer/senders/d7aa5a30-681d-4e72-92fb-f0ba0f6f4c3e/stream.sdp',
   flow_id: findOne('flows', config),
   id: uuidv4(),
@@ -166,7 +161,7 @@ const receiverMaker = config => ({
     sender_id: findOne('senders', config),
     active: config.nmosVersion === 'v10' ? undefined : true
   },
-  version: formatTS(dateNow()),
+  version: versionTS(),
   label: 'RTPRx',
   id: uuidv4(),
   transport: 'urn:x-nmos:transport:rtp',
@@ -177,14 +172,11 @@ const receiverMaker = config => ({
   device_id: findOne('devices', config)
 });
 
-
-
 module.exports = {
   selfMaker,
   deviceMaker,
   sourceMaker,
   flowMaker,
   senderMaker,
-  receiverMaker,
-  versionTS : () => formatTS(dateNow())
+  receiverMaker
 };

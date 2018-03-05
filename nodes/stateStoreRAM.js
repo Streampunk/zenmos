@@ -13,6 +13,9 @@
   limitations under the License.
 */
 
+const { stampPattern, compareVersions, extractVersions,
+  ptpMinusOne, formatTS } = require('../util/ptpMaths.js');
+
 const PAGING_LIMIT = 10;
 
 module.exports = function (RED) {
@@ -20,10 +23,9 @@ module.exports = function (RED) {
   const latest = new Map; // Store of pointers to the latest version
   const makeKeys = (resourceType, id, version) =>
     [ `${resourceType}_${id}_${version}`, `${resourceType}_${id}` ];
-  const stampPattern = /^([0-9]+):([0-9]+)$/;
-  const versionPattern = /^v[0-9]+.[0-9]+$/;
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  const versionPattern = /^v[0-9]+.[0-9]+$/;
   const queryParamTests = [
     { name : 'paging.since', test : v => stampPattern.test(v) },
     { name : 'paging.until', test : v => stampPattern.test(v) },
@@ -37,40 +39,8 @@ module.exports = function (RED) {
     { name : 'query.ancestry_generations', transform : v => + v,
       test : v => !isNaN(v) && v >= 0 }
   ];
-  const nineZeros = '000000000';
-  // const maxPTP = `${Number.MAX_SAFE_INTEGER}:000000000`;
-  const formatTS = ts => {
-    ts = extractVersions(ts);
-    let ts1 = ts[1].toString();
-    return `${ts[0]}:${nineZeros.slice(0, -ts1.length)}${ts1}`;
-  };
   const deref = (o, a) => a.reduce((x, y) => typeof x === 'object' ? x[y] : x, o);
   const joinKey = a => a.reduce((x, y) => `${x}.${y}`);
-
-  function extractVersions(v) {
-    if (Array.isArray(v)) return v;
-    var m = stampPattern.exec(v);
-    if (m === null) { return typeof v === 'number' ?
-      [v / 1000 | 0, (v % 1000) * 1000000 | 0] : [Number.MAX_SAFE_INTEGER, 0]; }
-    return [+m[1], +m[2]];
-  }
-
-  const ptpMinusOne = ts => {
-    let [ ts1, ts2 ] = extractVersions(ts);
-    ts2 = ts2 - 1;
-    if (ts2 === -1) { ts1 = ts1 - 1; ts2 = 0; }
-    return [ ts1, ts2 ];
-  };
-
-  function compareVersions(l, r) {
-    var lm = extractVersions(l);
-    var rm = extractVersions(r);
-    if (lm[0] < rm[0]) return -1;
-    if (lm[0] > rm[0]) return 1;
-    if (lm[1] < rm[1]) return -1;
-    if (lm[1] > rm[1]) return 1;
-    return 0;
-  }
 
   function StateStoreRAM (config) {
     RED.nodes.createNode(this, config);
