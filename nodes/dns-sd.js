@@ -16,10 +16,7 @@
 const fs = require('fs');
 const dns = require('dns');
 
-let dnsServ;
-const zoneFilePath = `${__dirname}/../zoneFile.json`;
-
-function createZoneFile() {
+function createZoneFile(config) {
   let zoneObj = {};
   zoneObj.primaryNameservers = dns.getServers();
 
@@ -34,22 +31,26 @@ function createZoneFile() {
   zoneObj.records.push({ zone: 'zenmos.net', name: 'db._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', ttl: 255, data: 'ns1.zenmos.net'});
   zoneObj.records.push({ zone: 'zenmos.net', name: 'lb._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', ttl: 255, data: 'ns1.zenmos.net'});
 
-  zoneObj.records.push({ zone: 'zenmos.net', name: '_services._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-registration._tcp'});
-  zoneObj.records.push({ zone: 'zenmos.net', name: '_services._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-query._tcp'});
+  zoneObj.records.push({ zone: 'zenmos.net', name: '_services._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-registration._tcp.zenmos.net'});
+  zoneObj.records.push({ zone: 'zenmos.net', name: '_services._dns-sd._udp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-query._tcp.zenmos.net'});
 
   zoneObj.records.push({ zone: 'zenmos.net', name: '_nmos-registration._tcp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: 'regsrv-1._nmos-registration._tcp.zenmos.net'});
+  zoneObj.records.push({ zone: 'zenmos.net', name: 'regsrv-1._nmos-registration._tcp.zenmos.net', type: 'A', class: 'IN', 'ttl': 255, address: '127.0.0.1'});
   zoneObj.records.push({ zone: 'zenmos.net', name: 'regsrv-1._nmos-registration._tcp.zenmos.net', type: 'SRV', class: 'IN', 'ttl': 255, priority: 10, weight: 5, port: 3001, target: '127.0.0.1'});
   zoneObj.records.push({ zone: 'zenmos.net', name: 'regsrv-1._nmos-registration._tcp.zenmos.net', type: 'TXT', class: 'IN', 'ttl': 255, data: ['api_proto=http', 'api_ver=v1.0', 'pri=10']});
 
   zoneObj.records.push({ zone: 'zenmos.net', name: '_nmos-query._tcp.zenmos.net', type: 'PTR', class: 'IN', 'ttl': 255, data: 'querysrv-1._nmos-query._tcp.zenmos.net'});
+  zoneObj.records.push({ zone: 'zenmos.net', name: 'querysrv-1._nmos-query._tcp.zenmos.net', type: 'A', class: 'IN', 'ttl': 255, address: '127.0.0.1'});
   zoneObj.records.push({ zone: 'zenmos.net', name: 'querysrv-1._nmos-query._tcp.zenmos.net', type: 'SRV', class: 'IN', 'ttl': 255, priority: 10, weight: 5, port: 3002, target: '127.0.0.1'});
   zoneObj.records.push({ zone: 'zenmos.net', name: 'querysrv-1._nmos-query._tcp.zenmos.net', type: 'TXT', class: 'IN', 'ttl': 255, data: ['api_proto=http', 'api_ver=v1.0', 'pri=10']});
 
+  const zoneFilePath = `${__dirname}/../zoneFiles/${config.id}.json`;
   fs.writeFileSync(zoneFilePath, JSON.stringify(zoneObj));
+  return zoneFilePath;
 }
 
 function createDnsServer(zoneFile, config, cb) {
-  dnsServ = require('child_process').fork(
+  const dnsServ = require('child_process').fork(
     `${__dirname}/../node_modules/digd.js`, 
     [ 
       '+notcp', 
@@ -76,15 +77,17 @@ function createDnsServer(zoneFile, config, cb) {
       cb(null, m);
     }
   });
+
+  return dnsServ;
 }
 
 module.exports = function (RED) {
   function dns_sd (config) {
     RED.nodes.createNode(this, config);
 
-    createZoneFile(config);
+    const zoneFilePath = createZoneFile(config);
 
-    createDnsServer(zoneFilePath, config, (err, msg) => {
+    const dnsServ = createDnsServer(zoneFilePath, config, (err, msg) => {
       if (err) {
         console.log('Error from DNS server:', err);
       } else {
@@ -113,6 +116,7 @@ module.exports = function (RED) {
       
     this.on('close', done => {
       dnsServ.kill();
+      fs.unlinkSync(zoneFilePath);
       done();
     });
   }
