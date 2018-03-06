@@ -45,7 +45,8 @@
       "queryLogic": "nodes/queryLogic.js",
       "nmosHTTPRequest": "nodes/nmosHTTPRequest.js",
       "dns-sd": "nodes/dns-sd.js",
-      "nodeLogid": "nodes/nodeLogic.js"
+      "nodeLogid": "nodes/nodeLogic.js",
+      "heartbeats": "nodes/heartbeats.js"
     }
   }
 }
