@@ -14,34 +14,74 @@
 */
 
 const fs = require('fs');
+const os = require('os');
+
+function getIPAddress(name) {
+  const interfaces = os.networkInterfaces();
+  const candidateInterfaces = [];
+  Object.keys(interfaces).forEach(ifname => {
+    interfaces[ifname].forEach(iface => {
+      if ('IPv4' === iface.family && !iface.internal)
+        candidateInterfaces.push({ name: ifname, address: iface.address });
+    });
+  });
+
+  const defaultAddress = candidateInterfaces.length ? candidateInterfaces[0].address : '127.0.0.1';
+  const selInterface = candidateInterfaces.find(i => i.name === name || i.address === name);
+  return selInterface ? selInterface.address : defaultAddress;
+}
 
 function createZoneFile(config) {
+  const aEnabled = config.aEnabled;
+  const aService = config.aService || 'nmos-registration';
+  const aName = `asrv-${config.id.split('.').join('')}`;
+  const aAddr = getIPAddress(config.aInterface);
+  const aPort = config.aPort || 3001;
+  const aTTL = config.aTTL || 255;
+  const aPriority = config.aPriority || 100;
+  const aTXT = config.aTXT ? config.aTXT.split(',') : [];
+
+  const bEnabled = config.bEnabled;
+  const bService = config.bService || 'nmos-query';
+  const bName = `bsrv-${config.id.split('.').join('')}`;
+  const bAddr = getIPAddress(config.bInterface);
+  const bPort = config.bPort || 3002;
+  const bTTL = config.bTTL || 255;
+  const bPriority = config.bPriority || 100;
+  const bTXT = config.bTXT ? config.bTXT.split(',') : [];
+
   let zoneObj = {};
   zoneObj.primaryNameservers = [];
 
   zoneObj.domains = [];
 
   zoneObj.records = [];
-  zoneObj.records.push({ zone: 'local', name: '_services._dns-sd._udp.local', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-registration._tcp.local'});
-  zoneObj.records.push({ zone: 'local', name: '_services._dns-sd._udp.local', type: 'PTR', class: 'IN', 'ttl': 255, data: '_nmos-query._tcp.local'});
+  if (aEnabled)
+    zoneObj.records.push({ zone: 'local', name: '_services._dns-sd._udp.local', type: 'PTR', class: 'IN', 'ttl': 43200, data: `_${aService}._tcp.local` });
+  if (bEnabled)
+    zoneObj.records.push({ zone: 'local', name: '_services._dns-sd._udp.local', type: 'PTR', class: 'IN', 'ttl': 43200, data: `_${bService}._tcp.local` });
 
-  zoneObj.records.push({ zone: 'local', name: '_nmos-registration._tcp.local', type: 'PTR', class: 'IN', 'ttl': 255, data: 'regsrv-1._nmos-registration._tcp.local'});
-  zoneObj.records.push({ zone: 'local', name: 'regsrv-1._nmos-registration._tcp.local', type: 'A', class: 'IN', 'ttl': 255, address: '127.0.0.1'});
-  zoneObj.records.push({ zone: 'local', name: 'regsrv-1._nmos-registration._tcp.local', type: 'SRV', class: 'IN', 'ttl': 255, priority: 10, weight: 5, port: 3001, target: 'regsrv-1._nmos-registration._tcp.local'});
-  zoneObj.records.push({ zone: 'local', name: 'regsrv-1._nmos-registration._tcp.local', type: 'TXT', class: 'IN', 'ttl': 255, data: ['api_proto=http', 'api_ver=v1.0', 'pri=10']});
+  if (aEnabled) {
+    zoneObj.records.push({ zone: 'local', name: `_${aService}._tcp.local`, type: 'PTR', class: 'IN', 'ttl': aTTL, data: `${aName}._${aService}._tcp.local` });
+    zoneObj.records.push({ zone: 'local', name: `${aName}._${aService}._tcp.local`, type: 'SRV', class: 'IN', 'ttl': aTTL, priority: aPriority, weight: 5, port: aPort, target: `${aName}.local` });
+    zoneObj.records.push({ zone: 'local', name: `${aName}._${aService}._tcp.local`, type: 'TXT', class: 'IN', 'ttl': aTTL, data: aTXT });
+    zoneObj.records.push({ zone: 'local', name: `${aName}.local`, type: 'A', class: 'IN', 'ttl': aTTL, address: aAddr });
+  }
 
-  zoneObj.records.push({ zone: 'local', name: '_nmos-query._tcp.local', type: 'PTR', class: 'IN', 'ttl': 255, data: 'querysrv-1._nmos-query._tcp.local'});
-  zoneObj.records.push({ zone: 'local', name: 'querysrv-1._nmos-query._tcp.local', type: 'A', class: 'IN', 'ttl': 255, address: '127.0.0.1'});
-  zoneObj.records.push({ zone: 'local', name: 'querysrv-1._nmos-query._tcp.local', type: 'SRV', class: 'IN', 'ttl': 255, priority: 10, weight: 5, port: 3002, target: 'querysrv-1._nmos-query._tcp.local'});
-  zoneObj.records.push({ zone: 'local', name: 'querysrv-1._nmos-query._tcp.local', type: 'TXT', class: 'IN', 'ttl': 255, data: ['api_proto=http', 'api_ver=v1.0', 'pri=10']});
-
+  if (bEnabled) {
+    zoneObj.records.push({ zone: 'local', name: `_${bService}._tcp.local`, type: 'PTR', class: 'IN', 'ttl': bTTL, data: `${bName}._${bService}._tcp.local` });
+    zoneObj.records.push({ zone: 'local', name: `${bName}._${bService}._tcp.local`, type: 'SRV', class: 'IN', 'ttl': bTTL, priority: bPriority, weight: 5, port: bPort, target: `${bName}.local` });
+    zoneObj.records.push({ zone: 'local', name: `${bName}._${bService}._tcp.local`, type: 'TXT', class: 'IN', 'ttl': bTTL, data: bTXT });
+    zoneObj.records.push({ zone: 'local', name: `${bName}.local`, type: 'A', class: 'IN', 'ttl': bTTL, address: bAddr });
+  }
+  
   const zoneFilePath = `${__dirname}/../zoneFiles/${config.id}.json`;
   fs.writeFileSync(zoneFilePath, JSON.stringify(zoneObj));
   return zoneFilePath;
 }
 
 function createDnsServer(zoneFile, config, cb) {
-  const address = config.interface||'0.0.0.0';
+  const mdnsAddress = config.interface||'0.0.0.0';
 
   const dnsServ = require('child_process').fork(
     `${__dirname}/../node_modules/digd.js`,
@@ -51,18 +91,17 @@ function createDnsServer(zoneFile, config, cb) {
       '--mdns=true',
       '--send=true',
       `--input=${zoneFile}`,
-      `--address=${address}`
+      `--address=${mdnsAddress}`
     ], 
     { silent: true }
   );
 
-  dnsServ.on('error', err => { 
-    cb(err);
-  });
+  dnsServ.stdout.on('data', () => {});
+  dnsServ.stderr.on('data', data => console.log(`mDNS server internal error: ${data}`));
 
-  dnsServ.on('exit', () => {
-    console.log('Stopped mDNS server');
-  });
+  dnsServ.on('close', code => console.log(`mDNS server exited with code ${code}`));
+  dnsServ.on('error', err => cb(err));
+  dnsServ.on('exit', () => console.log('Stopped mDNS server'));
 
   dnsServ.on('message', m => {
     if (m.ready) {
