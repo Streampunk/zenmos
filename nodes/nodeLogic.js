@@ -297,7 +297,9 @@ module.exports = function (RED) {
     for ( let [k, v] of this.store ) {
       if (v.version && compareVersions(v.version, this.since) >= 0) {
         let msg = {
-          type: 'HTTP REQ POST',
+          type: 'HTTP INIT POST',
+          api: 'nodes',
+          version: this.nmosVersion,
           url: `:registration/x-nmos/registration/${this.nmosVersion}/resource`,
           method: 'POST',
           payload: {

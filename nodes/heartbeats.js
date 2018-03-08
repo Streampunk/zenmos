@@ -44,7 +44,7 @@ module.exports = function (RED) {
       }
     }, +config.checkRate * 1000);
 
-    this.on('msg', msg => {
+    this.on('input', msg => {
       msg = Object.assign({}, msg);
       let msgType = msg.type;
 
@@ -134,10 +134,10 @@ module.exports = function (RED) {
         return this.send(msg);
       }
     });
-    
+
     this.on('close', () => {
       clearInterval(checkLoop);
     });
   }
-  RED.nodes.registerType('heartbearts', Heartbeats);
+  RED.nodes.registerType('heartbeats', Heartbeats);
 };
