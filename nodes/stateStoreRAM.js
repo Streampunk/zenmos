@@ -221,11 +221,12 @@ module.exports = function (RED) {
           compareVersions(since, r.version) < 0 &&
           compareVersions(r.version, until) <= 0);
         results = results.filter(r => { // basic query filters
-          Object.keys(msg.payload)
+          return Object.keys(msg.payload)
             .map(k => k.split('.'))
             .filter(k => r[k[0]] !== undefined)
             .every(k => deref(r, k) === msg.payload[joinKey(k)]);
         });
+
         results = results.slice(-limit);
         [ since, until ] = results.length > 0 ?
           [ ptpMinusOne(results.slice(-1)[0].version), results[0].version ] :
