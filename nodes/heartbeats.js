@@ -36,7 +36,7 @@ module.exports = function (RED) {
           };
           this.send(msg);
           gcd.push(k);
-          this.log(`No heartbeat received from node ${k} in more than ${tMinusGC} seconds. Requested garbage collection.`);
+          this.log(`No heartbeat received from node ${k} in more than ${config.gcInterval} seconds. Requested garbage collection.`);
         }
       }
       for ( let k of gcd ) {

@@ -48,8 +48,9 @@
       "nmosHTTPRequest": "nodes/nmosHTTPRequest.js",
       "mdns": "nodes/mdns.js",
       "dns-sd": "nodes/dns-sd.js",
-      "nodeLogid": "nodes/nodeLogic.js",
-      "heartbeats": "nodes/heartbeats.js"
+      "nodeLogic": "nodes/nodeLogic.js",
+      "heartbeats": "nodes/heartbeats.js",
+      "nodeRequester": "nodes/nodeRequester.js"
     }
   }
 }
