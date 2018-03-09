@@ -82,7 +82,7 @@ module.exports = function (RED) {
         }
       }
 
-      this.send(msg);
+      this.send(msg.type.startsWith('HTTP RES') ? [ null, msg ] : [ msg, null ]);
     });
 
     this.on('close', () => {
