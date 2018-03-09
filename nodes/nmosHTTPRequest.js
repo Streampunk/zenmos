@@ -170,8 +170,8 @@ module.exports = function (RED) {
       this.send(msg);
     });
 
-    let server = app.listen(config.port, () => {
-      this.log(`NMOS HTTP server ${config.name} is running on port ${config.port}.`);
+    let server = app.listen(config.port, config.interface, () => {
+      this.log(`NMOS HTTP server ${config.name} is running on interface ${config.interface} and port ${config.port}.`);
       let msg = {
         type: 'endpoint started',
         payload: {

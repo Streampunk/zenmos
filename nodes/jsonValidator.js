@@ -69,11 +69,12 @@ module.exports = function (RED) {
         msg = Object.assign({}, msg);
         if ((msg.type === 'HTTP REQ POST') &&
           (typeof msg.validated !== 'undefined') && (msg.validated === false)) {
-          let resourceType = msg.req.params.resource;
+          let [ resourceType, body ] = msg.req.params.resource === 'resource' ?
+            [ msg.payload.type, msg.payload.data ] :
+            [ msg.req.params.resource, msg.payload ];
           if (msg.req.params.id) {
             resourceType = resourceType.slice(0, -1); // Chop off the last 's'
           }
-          let body = msg.payload;
           let ajv = schemas.get(msg.version);
           if (!ajv) {
             msg.valid = false;
