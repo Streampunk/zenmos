@@ -27,6 +27,7 @@
     "ajv": "^6.1.1",
     "body-parser": "^1.18.2",
     "digd.js": "git+https://git.coolaj86.com/scriptorian/digd.js#master",
+    "dns-suite": "git+https://git.coolaj86.com/scriptorian/dns-suite.js#master",
     "express": "^4.16.2",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
@@ -48,7 +49,8 @@
       "nmosHTTPRequest": "nodes/nmosHTTPRequest.js",
       "mdns": "nodes/mdns.js",
       "dns-sd": "nodes/dns-sd.js",
-      "nodeLogic": "nodes/nodeLogic.js",
+      "dnsBrowser": "nodes/dnsBrowser.js",
+      "nodeLogid": "nodes/nodeLogic.js",
       "heartbeats": "nodes/heartbeats.js",
       "nodeRequester": "nodes/nodeRequester.js"
     }
