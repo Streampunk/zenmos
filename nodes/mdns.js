@@ -114,6 +114,10 @@ function createDnsServer(zoneFile, config, cb) {
   return dnsServ;
 }
 
+function filterDNS_SD(records) {
+  return records.find(r => r.name.indexOf('nmos') >= 0 || r.name.indexOf('dns-sd') >= 0);
+}
+
 module.exports = function (RED) {
   function mdns (config) {
     RED.nodes.createNode(this, config);
@@ -124,19 +128,22 @@ module.exports = function (RED) {
       if (err) {
         console.log('Error from mDNS server:', err);
       } else {
-        let msgid = RED.util.generateId();
-        if (msg.query) {
-          this.send({
-            type: 'mDNS QUERY',
-            _msgid: msgid,
-            payload: msg.query
-          });
-        } else if (msg.local) {
-          this.send({
-            type: 'mDNS RESPONSE',
-            _msgid: msgid,
-            payload: msg.local
-          });
+        if ((msg.query && filterDNS_SD(msg.query.question)) ||
+            (msg.local && filterDNS_SD(msg.local.answer))) {
+          const msgid = RED.util.generateId();
+          if (msg.query) {
+            this.send({
+              type: 'mDNS QUERY',
+              _msgid: msgid,
+              payload: msg.query
+            });
+          } else if (msg.local) {
+            this.send({
+              type: 'mDNS RESPONSE',
+              _msgid: msgid,
+              payload: msg.local
+            });
+          }
         }
       }
     });
