@@ -104,6 +104,7 @@ module.exports = function (RED) {
         break;
       case 'SRV':
         service.target = r.target;
+        service.port = r.port;
         if (!service.address)
           service.address = r.target;
         break;
