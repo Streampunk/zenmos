@@ -99,6 +99,21 @@ module.exports = function (RED) {
       }
     };
 
+    config.base = config.base.startsWith('/') ? config.base : '/' + config.base;
+    config.base = config.base.endsWith('/') ? config.base : config.base + '/';
+
+    app.get('/', (req, res) => {
+      this.send({
+        type: 'HTTP RES 200',
+        req: req,
+        res: createResponseWrapper(this, res),
+        statusCode: 200,
+        payload: [ config.base.slice(1) ]
+      });
+    });
+
+    config.base = config.base.endsWith('/') ? config.base : config.base + '/';
+
     app.get(config.base + ':api?', this.callback);
 
     app.get(config.base + ':api/:ver', this.callback);
