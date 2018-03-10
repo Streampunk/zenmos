@@ -23,14 +23,14 @@
         aEnabled: { value : true },
         aService: { value : 'nmos-registration' },
         aAddr: { value : '127.0.0.1' }, // No validator - allow hostnames
-        aPort: { value : 3001, validate : RED.validators.number() },
+        aPort: { value : 3101, validate : RED.validators.number() },
         aTTL: { value : 255, validate : RED.validators.number() },
         aPriority: { value : 100, validate : RED.validators.number() },
         aTXT: { value : 'api_proto=http,api_ver=v1.0,pri=100' },
         bEnabled: { value : true },
         bService: { value : 'nmos-query' },
         bAddr: { value : '127.0.0.1' }, // No validator - allow hostnames
-        bPort: { value : 3001, validate : RED.validators.number() },
+        bPort: { value : 3102, validate : RED.validators.number() },
         bTTL: { value : 255, validate : RED.validators.number() },
         bPriority: { value : 100, validate : RED.validators.number() },
         bTXT: { value : 'api_proto=http,api_ver=v1.0,pri=100' }
