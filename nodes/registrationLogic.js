@@ -129,6 +129,7 @@ module.exports = function (RED) {
         return this.send(msg);
       }
 
+      debugger;
       if (msg.req.url.indexOf('health/nodes') >= 0) {
         return; // Let the heartbeat processing logic deal with the message
       }

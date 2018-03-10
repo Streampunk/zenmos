@@ -22,6 +22,7 @@ module.exports = function (RED) {
   const knownResources =
     [ 'self', 'devices', 'sources', 'flows', 'senders', 'receivers'];
   const supportedVersions = [ 'v1.0', 'v1.1', 'v1.2' ];
+  const versionTable = { 'v10': 'v1.0', 'v11': 'v1.1', 'v12': 'v1.2' };
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-f]{12}$/;
   const flattenIFs = i => Object.entries(i).reduce((x, [k, v]) =>
@@ -32,7 +33,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     this.store = new Map; // current internal state of the node
     this.since = '0:0';
-    this.nmosVersion = config.nmosVersion;
+    this.nmosVersion = versionTable[config.nmosVersion];
+    let firstSend = false;
 
     if (!config.selfID) {
       config.selfID = uuidv4();
@@ -66,7 +68,6 @@ module.exports = function (RED) {
     for ( let x = 0 ; x < +config.receivers ; x++ ) {
       (s => this.store.set(`receivers_${s.id}`, s))(receiverMaker(config));
     }
-    this.sendUpdates(false);
 
     this.on('input', msg => {
       msg = Object.assign({}, msg);
@@ -100,9 +101,10 @@ module.exports = function (RED) {
             })))
         });
         this.store.set(selfKey, myNewSelf);
+        this.sendUpdates(firstSend);
+        firstSend = true;
         return;
       }
-
       if (!msg.type.startsWith('HTTP REQ')) {
         return; // Only process HTTP messages
       }

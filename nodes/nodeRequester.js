@@ -16,6 +16,7 @@
 const request = require('request-promise-native');
 
 module.exports = function (RED) {
+  // const versionTable = { 'v10': 'v1.0', 'v11': 'v1.1', 'v12': 'v1.2' };
   function NodeRequester (config) {
     RED.nodes.createNode(this, config);
 
@@ -87,9 +88,10 @@ module.exports = function (RED) {
         return msgQueue.push(msg);
       }
 
-      if (!basePath.endsWith('/')) basePath += '/';
+      if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
       let fullPath = msg.url.replace(/:registration/, basePath);
 
+      // debugger;
       if (msgType === 'HTTP INIT POST') {
         request({
           method: 'POST',
@@ -121,8 +123,8 @@ module.exports = function (RED) {
             payload: res.body
           };
           if (msg.payload.type === 'node') {
-            startBeat(`${basePath}/x-nmos/registration/${config.nmosVersion}` +
-              `/health/nodes/${msg.payload.data.id}`, this.send);
+            startBeat(`${basePath}/x-nmos/registration/${msg.version}` +
+              `/health/nodes/${msg.payload.data.id}`, this.send.bind(this));
           }
           return this.send(replyMsg);
         }).catch(e => {
