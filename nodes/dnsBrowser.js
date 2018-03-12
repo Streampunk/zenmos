@@ -53,36 +53,40 @@ function createUDPListener(options, cb) {
   return socket;
 }
 
-function makeQuery(name, typeName) {
-  const types = {
-    A:    0x1,  // 1
-    PTR:  0xc,  // 12
-    TXT:  0x10, // 16
-    AAAA: 0x1c, // 28
-    SRV:  0x21  // 33
-  };
-
-  return {
-    header: { id: require('crypto').randomBytes(2).readUInt16BE(0), qr: 0, opcode: 0, aa: 0, tc: 0, rd: 0, ra: 0, rcode: 0 }
-    , question: [{ name: name, type: types[typeName], typeName: typeName, class: 1, className: 'IN' }]
-    , answer: []
-    , authority: []
-    , additional: []
-  };
-}
-
 module.exports = function (RED) {
   function DNSBrowser (config) {
     RED.nodes.createNode(this, config);
 
     const mdns = !(config.unicast || false);
-    const address = config.address || '0.0.0.0';
+    const address = config.interface || '127.0.0.1';
+    const unicastDomain = config.unicastDomain || 'zenmos.net';
     const port = mdns ? 5353 : 53;
     const timeout = 1000;
+    const domain = mdns ? 'local' : unicastDomain;
+    const dns_sd_query = `_services._dns-sd._udp.${domain}`;
+
+    function makeQuery(name, typeName) {
+      const types = {
+        A:    0x1,  // 1
+        PTR:  0xc,  // 12
+        TXT:  0x10, // 16
+        AAAA: 0x1c, // 28
+        SRV:  0x21  // 33
+      };
+    
+      return {
+        header: { id: require('crypto').randomBytes(2).readUInt16BE(0), qr: 0, opcode: 0, aa: 0, tc: 0, rd: 0, ra: 0, rcode: 0 }
+        , question: [{ name: name, type: types[typeName], typeName: typeName, class: mdns?0x8001:1, className: 'IN' }]
+        , answer: []
+        , authority: []
+        , additional: []
+      };
+    }
 
     const services = [];
     function checkService(service) {
-      console.log(`DNS Browser: insufficient data received for ${service.name} after ${timeout}ms`);
+      if (mdns)
+        console.log(`DNS Browser: insufficient data received for ${service.name} after ${timeout}ms`);
       if (service.instance) {
         if (!service.target)
           send(makeQuery(service.instance, 'SRV'));
@@ -116,16 +120,18 @@ module.exports = function (RED) {
         service.address = r.address;
         break;
       default: 
-        console.error(`Unexpected packet type '${r.typeName}' in additional record`);
+        service.debug.push(`Unexpected packet type '${r.typeName}' name '${r.name} in additional record`);
       }
     }
 
-    const socket = createUDPListener({ address: address, port: port, mdns: mdns }, (err, packet, rinfo) => {
+    const bindPort = mdns ? port : 0;
+    const bindAddress = '127.0.0.1' === address ? '0.0.0.0' : address; 
+    const socket = createUDPListener({ address: bindAddress, port: bindPort, mdns: mdns }, (err, packet, rinfo) => {
       if (err)
         console.error(`Error from ${rinfo.address}:${rinfo.port}: `, err);
-      else {
+      else if (rinfo.port === port) {
         packet.answer.forEach(a => {
-          if (a.name === '_services._dns-sd._udp.local' && a.data.indexOf('nmos') >= 0) {
+          if (a.name === dns_sd_query && a.data.indexOf('nmos') >= 0) {
             if (!services.find(s => s.name === a.data)) {
               const service = {
                 discovery: (5353 === rinfo.port) ? 'multicast' : 'unicast',
@@ -170,14 +176,15 @@ module.exports = function (RED) {
 
     function send(query) {
       const nb = dnsjs.DNSPacket.write(query);
-      // mDNS requires id in response header to be 0. Force it here as DNSPacket.write doesn't know about mDNS
-      nb.writeUInt16LE(0, 0);
+      if (mdns)
+        // mDNS requires id in response header to be 0. Force it here as DNSPacket.write doesn't know about mDNS
+        nb.writeUInt16LE(0, 0);
   
-      const sendAddress = '224.0.0.251';
+      const sendAddress = mdns ? '224.0.0.251' : address;
       socket.send(nb, port, sendAddress);
     }
 
-    setTimeout(() => send(makeQuery('_services._dns-sd._udp.local', 'PTR')), 1000);
+    setTimeout(() => send(makeQuery(dns_sd_query, 'PTR')), 1000);
 
     this.on('close', done => {
       socket.close();

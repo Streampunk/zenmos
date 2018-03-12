@@ -19,8 +19,9 @@
       category: 'zenmos',
       color: '#B19479',
       defaults: {
-        interface: { value : '0.0.0.0' }, // No validator - allow hostnames
-        unicast: { value: false }
+        interface: { value : '127.0.0.1' }, // No validator - allow hostnames
+        unicast: { value : false },
+        unicastDomain: { value : 'zenmos.net' }
       },
       inputs:0,
       outputs:1,
@@ -40,6 +41,10 @@
     <label for="node-input-unicast"><i class="fa fa-wifi" aria-hidden="true"></i> Unicast</label>
     <input type="checkbox" id="node-input-unicast" style="display: inline-block; width: auto">
   </div>
+  <div class="form-row">
+    <label for="node-input-unicastDomain" style="vertical-align: top"><i class="fa fa-address-card" aria-hidden="true"></i> Unicast Domain</label>
+    <input type="text" id="node-input-unicastDomain" placeholder="zenmos.net">
+  </div>
 </script>
 
 <style>
@@ -57,8 +62,16 @@
   <div class="param-table">
     <table>
       <tr>
-        <td><i class="fa fa-external-link-square" aria-hidden="true"></i> interface</td>
-        <td>Interface to use for DNS requests. Default is all interfaces <code>0.0.0.0</code>.</td>
+        <td><i class="fa fa-external-link-square" aria-hidden="true"></i> Interface</td>
+        <td>Interface to use for DNS requests. Default is localhost <code>127.0.0.1</code>.</td>
+      </tr>
+      <tr>
+        <td><i class="fa fa-wifi" aria-hidden="true"></i> Unicast</td>
+        <td>Select between multicast and unicast for DNS requests. Default is multicast.</td>
+      </tr>
+      <tr>
+        <td><i class="fa fa-address-card" aria-hidden="true"></i> Unicast Domain</td>
+        <td>Domain suffix to use for unicast DNS requests. Default is <code>zenmos.net</code>.</td>
       </tr>
     </table>
   </div>
