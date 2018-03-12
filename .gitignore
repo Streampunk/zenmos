@@ -59,3 +59,13 @@ typings/
 
 # Directory for DNS zone files
 zoneFiles
+
+# Directories for electron build
+dist/electron/*
+dist/web/*
+build/*
+!build/icons
+!.gitkeep
+
+# Directory for Node-RED user files
+reduser
