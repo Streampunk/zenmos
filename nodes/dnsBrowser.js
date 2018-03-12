@@ -33,10 +33,12 @@ function createUDPListener(options, cb) {
   };
 
   handlers.onMessage = function (nb, rinfo) {
-    try {
-      cb(null, dnsjs.DNSPacket.parse(nb), rinfo);
-    } catch(e) {
-      console.error('Could not parse DNS query, ignoring.');
+    if (rinfo.port === options.port) {
+      try {
+        cb(null, dnsjs.DNSPacket.parse(nb), rinfo);
+      } catch(e) {
+        console.error('Could not parse DNS query, ignoring.');
+      }
     }
   };
 
@@ -129,7 +131,7 @@ module.exports = function (RED) {
     const socket = createUDPListener({ address: bindAddress, port: bindPort, mdns: mdns }, (err, packet, rinfo) => {
       if (err)
         console.error(`Error from ${rinfo.address}:${rinfo.port}: `, err);
-      else if (rinfo.port === port) {
+      else {
         packet.answer.forEach(a => {
           if (a.name === dns_sd_query && a.data.indexOf('nmos') >= 0) {
             if (!services.find(s => s.name === a.data)) {
