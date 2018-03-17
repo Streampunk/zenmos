@@ -3,6 +3,11 @@ import Router from 'vue-router';
 
 Vue.use(Router);
 
+// const auditlags = [
+//   { id: 1, name: 'one'},
+//   { id: 2, name: 'two'},
+// ];
+
 export default new Router({
   routes: [
     {
@@ -22,7 +27,7 @@ export default new Router({
     },
     {
       path: '/audit',
-      name: 'Audit Log',
+      name: 'AuditView',
       component: require('@/components/AuditView').default
     },
     {

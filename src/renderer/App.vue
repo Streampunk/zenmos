@@ -87,6 +87,8 @@
 
 <script>
   import createNodeRed from '../../nodeRed.js';
+  import AuditList from './components/AuditList.vue';
+
   export default {
     name: 'zenmos',
     data: () => ({
@@ -103,11 +105,19 @@
       miniVariant: false,
       right: true,
       rightDrawer: false,
-      title: 'Zenmos'
+      title: 'Zenmos',
+      auditmsgs: []
     }),
 
+    methods: {    
+      auditConnect(cb) {
+        cb(this.auditmsgs);
+      }
+    },
+
     created: function () {
-      createNodeRed(null, null);
+      createNodeRed(this.auditConnect, null);
+      AuditList.methods.setConnect(() => this.auditmsgs);
     },
 
   };

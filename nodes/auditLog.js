@@ -25,6 +25,10 @@ module.exports = function (RED) {
       .map(i => i.address)
   )(os.networkInterfaces());
 
+  const auditConnect = RED.settings.functionGlobalContext.get('audit');
+  if (auditConnect)
+    auditConnect(viewLog => log = viewLog);
+
   function AuditLog (config) {
     RED.nodes.createNode(this, config);
 
