@@ -19,8 +19,12 @@ const { stampPattern, compareVersions, extractVersions,
 const PAGING_LIMIT = 10;
 
 module.exports = function (RED) {
-  const store = new Map; // Store of all NMOS resource
-  const latest = new Map; // Store of pointers to the latest version
+  const persist = { 
+    store: new Map, // Store of all NMOS resource
+    latest: new Map // Store of pointers to the latest version
+  };
+  const store = persist.store;
+  const latest = persist.latest;
   const makeKeys = (resourceType, id, version) =>
     [ `${resourceType}_${id}_${version}`, `${resourceType}_${id}` ];
   const uuidPattern =
@@ -41,6 +45,24 @@ module.exports = function (RED) {
   ];
   const deref = (o, a) => a.reduce((x, y) => typeof x === 'object' ? x[y] : x, o);
   const joinKey = a => a.reduce((x, y) => `${x}.${y}`);
+
+  let viewSet;
+  let viewClear;
+  const registryConnect = RED.settings.functionGlobalContext.get('registration');
+  if (registryConnect)
+    registryConnect((set, clear) => { viewSet = set; viewClear = clear; });
+
+  function mapSet(map, key, value) {
+    persist[map].set(key, value);
+    if (viewSet)
+      viewSet(map, key, value);
+  }
+
+  function mapClear(map) {
+    persist[map].clear();
+    if (viewClear)
+      viewClear(map);
+  }
 
   function StateStoreRAM (config) {
     RED.nodes.createNode(this, config);
@@ -84,10 +106,10 @@ module.exports = function (RED) {
             `Collection ${resourceType} already has an item with ID ${id} and version ${resVer}.`;
           return this.send(msg);
         }
-        store.set(storeKey, msg.payload.data);
+        mapSet('store', storeKey, msg.payload.data);
         msg.update = latest.has(latestKey);
         let timeNow = Date.now();
-        latest.set(latestKey, {
+        mapSet('latest', latestKey, {
           key: storeKey,
           apiVersion: apiVer,
           updateTime: timeNow,
@@ -159,7 +181,7 @@ module.exports = function (RED) {
           msg.payload = `Read request for a resource from the ${resourceType} this is marked as deleted.`;
           return this.send(msg);
         }
-        latest.set(latestKey, {
+        mapSet('latest', latestKey, {
           key: `tombstone_${oldResVer}`,
           apiVersion: msg.version,
           updatedTime: Date.now(),
@@ -261,8 +283,8 @@ module.exports = function (RED) {
     });
 
     this.on('close', () => {
-      store.clear();
-      latest.clear();
+      mapClear('store');
+      mapClear('latest');
     });
   }
   RED.nodes.registerType('state-store-RAM', StateStoreRAM);

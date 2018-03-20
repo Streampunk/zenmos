@@ -88,6 +88,7 @@
 <script>
   import createNodeRed from '../../nodeRed.js';
   import AuditList from './components/AuditList.vue';
+  import RegistryList from './components/RegistryList.vue';
 
   export default {
     name: 'zenmos',
@@ -106,18 +107,36 @@
       right: true,
       rightDrawer: false,
       title: 'Zenmos',
-      auditmsgs: []
+      auditMsgs: [],
+      store: [],
+      latest: [],
     }),
 
     methods: {    
       auditConnect(cb) {
-        cb(this.auditmsgs);
+        cb(this.auditMsgs);
+      },
+
+      registryConnect(cb) {
+        cb(this.regSet, this.regClear);
+      },
+
+      regSet(map, key, value) {
+        const existing = this[map].findIndex(m => m.key === key);
+        if (existing >= 0)
+          this[map].splice(existing, 1);
+        this[map].push({ key : key, value : value });
+      },
+
+      regClear(map) {
+        this[map].clear();
       }
     },
 
     created: function () {
-      createNodeRed(this.auditConnect, null);
-      AuditList.methods.setConnect(() => this.auditmsgs);
+      createNodeRed(this.auditConnect, this.registryConnect);
+      AuditList.methods.setConnect(() => this.auditMsgs);
+      RegistryList.methods.setConnect(() => [ this.store, this.latest ]);
     },
 
   };
