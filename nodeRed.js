@@ -25,7 +25,27 @@ function createNodeRed(audit, registration) {
       registration: registration
     },
     paletteCategories: ['zenmos', 'input', 'output', 'function', 'social', 'storage', 'analysis', 'advanced'],
-    logging: { console : { level : 'warn', audit : false } }
+    logging: {
+      console: {
+        level: 'warn', 
+        audit: false 
+      },
+      file: {
+        level:'warn',
+        metrics:false,
+        handler: function() {
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const filename = `${os.homedir()}${path.sep}NodeRED.log`;
+          fs.openSync(filename, 'w');
+          return function(msg) {
+            const logMsg = `${new Date(msg.timestamp).toLocaleTimeString('en-US')} ${msg.msg}${os.EOL}`;
+            fs.appendFile(filename, logMsg, () => {});
+          };
+        }
+      }
+    }
   };
 
   // Initialise the runtime with a server and settings
