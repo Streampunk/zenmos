@@ -15,6 +15,7 @@
 
 const fs = require('fs');
 const os = require('os');
+const path = require('path');
 
 function getIPAddress(name) {
   const interfaces = os.networkInterfaces();
@@ -75,7 +76,10 @@ function createZoneFile(config) {
     zoneObj.records.push({ zone: 'local', name: `${bName}.local`, type: 'A', class: 'IN', 'ttl': bTTL, address: bAddr });
   }
   
-  const zoneFilePath = `${__dirname}/../zoneFiles/${config.id}.json`;
+  const zoneFileDir = path.join(__dirname, '..', 'zoneFiles');
+  const zoneFilePath = path.join(zoneFileDir, `${config.id}.json`);
+  if (!fs.existsSync(zoneFileDir))
+    fs.mkdirSync(zoneFileDir);
   fs.writeFileSync(zoneFilePath, JSON.stringify(zoneObj));
   return zoneFilePath;
 }
@@ -84,15 +88,15 @@ function createDnsServer(zoneFile, config, cb) {
   const mdnsAddress = config.interface||'0.0.0.0';
 
   const dnsServ = require('child_process').fork(
-    `${__dirname}/../node_modules/digd.js`,
-    [ 
+    path.join(__dirname, '..', 'node_modules', 'digd.js'),
+    [
       '+notcp',
       '--debug=false',
       '--mdns=true',
       '--send=true',
       `--input=${zoneFile}`,
       `--address=${mdnsAddress}`
-    ], 
+    ],
     { silent: true }
   );
 

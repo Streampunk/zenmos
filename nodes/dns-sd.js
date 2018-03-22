@@ -14,8 +14,9 @@
 */
 
 const fs = require('fs');
-const dns = require('dns');
 const os = require('os');
+const path = require('path');
+const dns = require('dns');
 
 function getIPAddress(name) {
   const interfaces = os.networkInterfaces();
@@ -84,7 +85,10 @@ function createZoneFile(config) {
     zoneObj.records.push({ zone: 'zenmos.net', name: `${bName}.zenmos.net`, type: 'A', class: 'IN', 'ttl': bTTL, address: bAddr });
   }
 
-  const zoneFilePath = `${__dirname}/../zoneFiles/${config.id}.json`;
+  const zoneFileDir = path.join(__dirname, '..', 'zoneFiles');
+  const zoneFilePath = path.join(zoneFileDir, `${config.id}.json`);
+  if (!fs.existsSync(zoneFileDir))
+    fs.mkdirSync(zoneFileDir);
   fs.writeFileSync(zoneFilePath, JSON.stringify(zoneObj));
   return zoneFilePath;
 }
@@ -93,14 +97,14 @@ function createDnsServer(zoneFile, config, cb) {
   const dnsAddress = config.interface||'0.0.0.0';
 
   const dnsServ = require('child_process').fork(
-    `${__dirname}/../node_modules/digd.js`, 
-    [ 
+    path.join(__dirname, '..', 'node_modules', 'digd.js'),
+    [
       '+notcp', 
       '--debug=false',
       '--send=true',
       `--input=${zoneFile}`,
       `--address=${dnsAddress}`
-    ], 
+    ],
     { silent: true }
   );
 
