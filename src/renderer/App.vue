@@ -129,7 +129,7 @@
       },
 
       regClear(map) {
-        this[map].clear();
+        this[map].splice(0); // splice is reactive, setting length=0 is not
       }
     },
 
