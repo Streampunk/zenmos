@@ -43,9 +43,9 @@
       "dist/electron/**/*"
     ],
     "extraFiles": [
-      "nodes/**/*",
-      "schemas/**/*",
-      "util/**/*"
+      { "from": "nodes", "to": "resources/app/nodes", "filter": "**/*" },
+      { "from": "schemas", "to": "resources/app/schemas", "filter": "**/*" },
+      { "from": "util", "to": "resources/app/util", "filter": "**/*" }
     ],
     "dmg": {
       "contents": [

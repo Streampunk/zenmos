@@ -86,7 +86,7 @@
 </template>
 
 <script>
-  import createNodeRed from '../../nodeRed.js';
+  import createNodeRed from './components/nodeRed.js';
   import AuditList from './components/AuditList.vue';
   import RegistryList from './components/RegistryList.vue';
 

@@ -1,6 +1,7 @@
-var http = require('http');
-var express = require('express');
-var RED = require('node-red');
+const http = require('http');
+const express = require('express');
+const RED = require('node-red');
+const path = require('path');
 
 function createNodeRed(audit, registration) {
   console.log('Starting Node-RED');
@@ -19,7 +20,7 @@ function createNodeRed(audit, registration) {
     httpAdminRoot: '/red',
     httpNodeRoot: '/api',
     userDir: 'reduser',
-    nodesDir: 'nodes',
+    nodesDir: process.env.NODE_ENV !== 'development' ? path.join('resources', 'app', 'nodes') : 'nodes',
     functionGlobalContext: {
       audit: audit,
       registration: registration
@@ -36,8 +37,7 @@ function createNodeRed(audit, registration) {
         handler: function() {
           const fs = require('fs');
           const os = require('os');
-          const path = require('path');
-          const filename = `${os.homedir()}${path.sep}NodeRED.log`;
+          const filename = 'NodeRED.log'; //`${os.homedir()}${path.sep}NodeRED.log`;
           fs.openSync(filename, 'w');
           return function(msg) {
             const logMsg = `${new Date(msg.timestamp).toLocaleTimeString('en-US')} ${msg.msg}${os.EOL}`;
