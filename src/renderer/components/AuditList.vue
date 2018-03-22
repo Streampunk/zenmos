@@ -69,6 +69,7 @@ export default {
       return Object.keys(msg).filter(k => msg.hasOwnProperty(k)).sort();
     },
     msgStr(item, key) {
+      if (('req' === key) || ('res' === key)) return '';
       return JSON.stringify(item[key], null, 2);
     }
   },
