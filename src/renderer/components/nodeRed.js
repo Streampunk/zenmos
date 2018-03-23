@@ -1,10 +1,20 @@
 const http = require('http');
 const express = require('express');
 const RED = require('node-red');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 function createNodeRed(audit, registration) {
-  console.log('Starting Node-RED');
+  const basePath = 'darwin' === os.platform() ? 
+    path.join(process.env.HOME, 'Library', 'zenmos') :
+    path.join(process.env.APPDATA, 'zenmos');
+  const nodesPath = process.env.NODE_ENV !== 'development' ? 
+    path.join(__dirname, '..', '..', 'nodes') : 
+    'nodes';
+  if (!fs.existsSync(basePath))
+    fs.mkdirSync(basePath);
+  console.log(`Starting Node-RED, user path: ${basePath}, nodes path: ${nodesPath}, dir ${__dirname}`);
 
   // Create an Express app
   var app = express();
@@ -19,8 +29,8 @@ function createNodeRed(audit, registration) {
   var settings = {
     httpAdminRoot: '/red',
     httpNodeRoot: '/api',
-    userDir: 'reduser',
-    nodesDir: process.env.NODE_ENV !== 'development' ? path.join('resources', 'app', 'nodes') : 'nodes',
+    userDir: path.join(basePath, 'reduser'),
+    nodesDir: nodesPath,
     functionGlobalContext: {
       audit: audit,
       registration: registration
@@ -35,9 +45,7 @@ function createNodeRed(audit, registration) {
         level:'warn',
         metrics:false,
         handler: function() {
-          const fs = require('fs');
-          const os = require('os');
-          const filename = 'NodeRED.log'; //`${os.homedir()}${path.sep}NodeRED.log`;
+          const filename = path.join(basePath, 'NodeRED.log');
           fs.openSync(filename, 'w');
           return function(msg) {
             const logMsg = `${new Date(msg.timestamp).toLocaleTimeString('en-US')} ${msg.msg}${os.EOL}`;

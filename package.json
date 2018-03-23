@@ -43,9 +43,21 @@
       "dist/electron/**/*"
     ],
     "extraFiles": [
-      { "from": "nodes", "to": "resources/app/nodes", "filter": "**/*" },
-      { "from": "schemas", "to": "resources/app/schemas", "filter": "**/*" },
-      { "from": "util", "to": "resources/app/util", "filter": "**/*" }
+      {
+        "from": "nodes",
+        "to": "resources/app/nodes",
+        "filter": "**/*"
+      },
+      {
+        "from": "schemas",
+        "to": "resources/app/schemas",
+        "filter": "**/*"
+      },
+      {
+        "from": "util",
+        "to": "resources/app/util",
+        "filter": "**/*"
+      }
     ],
     "dmg": {
       "contents": [
@@ -105,10 +117,10 @@
     "del": "^3.0.0",
     "devtron": "^1.4.0",
     "electron": "^1.8.4",
-    "electron-builder": "^20.5.1",
+    "electron-builder": "^20.6.2",
     "electron-debug": "^1.4.0",
     "electron-devtools-installer": "^2.2.0",
-    "eslint": "^4.4.1",
+    "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "eslint-friendly-formatter": "^3.0.0",
     "eslint-loader": "^1.9.0",

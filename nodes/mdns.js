@@ -76,7 +76,9 @@ function createZoneFile(config) {
     zoneObj.records.push({ zone: 'local', name: `${bName}.local`, type: 'A', class: 'IN', 'ttl': bTTL, address: bAddr });
   }
   
-  const zoneFileDir = path.join(__dirname, '..', 'zoneFiles');
+  const zoneFileDir = 'darwin' === os.platform() ? 
+    path.join(process.env.HOME, 'Library', 'zenmos', 'zoneFiles') :
+    path.join(process.env.APPDATA, 'zenmos', 'zoneFiles');
   const zoneFilePath = path.join(zoneFileDir, `${config.id}.json`);
   if (!fs.existsSync(zoneFileDir))
     fs.mkdirSync(zoneFileDir);
@@ -84,7 +86,7 @@ function createZoneFile(config) {
   return zoneFilePath;
 }
 
-function createDnsServer(zoneFile, config, cb) {
+function createDnsServer(node, zoneFile, config, cb) {
   const mdnsAddress = config.interface||'0.0.0.0';
 
   const dnsServ = require('child_process').fork(
@@ -101,15 +103,15 @@ function createDnsServer(zoneFile, config, cb) {
   );
 
   dnsServ.stdout.on('data', () => {});
-  dnsServ.stderr.on('data', data => console.log(`mDNS server internal error: ${data}`));
+  dnsServ.stderr.on('data', data => node.log(`mDNS server internal error: ${data}`));
 
-  dnsServ.on('close', code => console.log(`mDNS server exited with code ${code}`));
+  dnsServ.on('close', code => node.log(`mDNS server exited with code ${code}`));
   dnsServ.on('error', err => cb(err));
-  dnsServ.on('exit', () => console.log('Stopped mDNS server'));
+  dnsServ.on('exit', () => node.log('Stopped mDNS server'));
 
   dnsServ.on('message', m => {
     if (m.ready) {
-      console.log('Started mDNS server:', m.ready);
+      node.log(`Started mDNS server: ${m.ready}`);
     } else {
       cb(null, m);
     }
@@ -125,12 +127,13 @@ function filterDNS_SD(records) {
 module.exports = function (RED) {
   function mdns (config) {
     RED.nodes.createNode(this, config);
+    const node = this;
 
     const zoneFilePath = createZoneFile(config);
 
-    const dnsServ = createDnsServer(zoneFilePath, config, (err, msg) => {
+    const dnsServ = createDnsServer(node, zoneFilePath, config, (err, msg) => {
       if (err) {
-        console.log('Error from mDNS server:', err);
+        node.log(`Error from mDNS server: ${err}`);
       } else {
         if ((msg.query && filterDNS_SD(msg.query.question)) ||
             (msg.local && filterDNS_SD(msg.local.answer))) {
