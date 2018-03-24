@@ -26,14 +26,14 @@
         aPort: { value : 3101, validate : RED.validators.number() },
         aTTL: { value : 255, validate : RED.validators.number() },
         aPriority: { value : 100, validate : RED.validators.number() },
-        aTXT: { value : 'api_proto=http,api_ver=v1.0,pri=100' },
+        aTXT: { value : 'api_proto=http,api_ver=v1.2,pri=100' },
         bEnabled: { value : true },
         bService: { value : 'nmos-query' },
         bAddr: { value : '127.0.0.1' }, // No validator - allow hostnames
         bPort: { value : 3102, validate : RED.validators.number() },
         bTTL: { value : 255, validate : RED.validators.number() },
         bPriority: { value : 100, validate : RED.validators.number() },
-        bTXT: { value : 'api_proto=http,api_ver=v1.0,pri=100' }
+        bTXT: { value : 'api_proto=http,api_ver=v1.2,pri=100' }
       },
       inputs:0,
       outputs:1,
@@ -71,7 +71,7 @@
   <div class="form-row">
     <label>&nbsp;</label>
     <label for="node-input-aTXT" style="width: 80px"><i class="fa fa-comment" aria-hidden="true"></i> TXT</label>
-    <input type="text" id="node-input-aTXT" style="width: 250px" placeholder="api_proto=http,api_ver=v1.0,pri=100">
+    <input type="text" id="node-input-aTXT" style="width: 250px" placeholder="api_proto=http,api_ver=v1.2,pri=100">
   </div>
 
   <div class="form-row">
@@ -96,7 +96,7 @@
   <div class="form-row">
     <label>&nbsp;</label>
     <label for="node-input-bTXT" style="width: 80px"><i class="fa fa-comment" aria-hidden="true"></i> TXT</label>
-    <input type="text" id="node-input-bTXT" style="width: 250px" placeholder="api_proto=http,api_ver=v1.0,pri=100">
+    <input type="text" id="node-input-bTXT" style="width: 250px" placeholder="api_proto=http,api_ver=v1.2,pri=100">
   </div>
 </script>
 
