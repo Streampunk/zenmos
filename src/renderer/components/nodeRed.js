@@ -14,7 +14,7 @@ function createNodeRed(audit, registration) {
     'nodes';
   if (!fs.existsSync(basePath))
     fs.mkdirSync(basePath);
-  console.log(`Starting Node-RED, user path: ${basePath}, nodes path: ${nodesPath}, dir ${__dirname}`);
+  console.log(`Starting Node-RED, user path: ${basePath}`);
 
   // Create an Express app
   var app = express();
