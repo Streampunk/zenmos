@@ -27,8 +27,8 @@ function createNodeRed(audit, registration) {
 
   // Create the settings object - see default settings.js file for other options
   var settings = {
-    httpAdminRoot: '/red',
-    httpNodeRoot: '/api',
+    httpAdminRoot: '/',
+    httpNodeRoot: '/',
     userDir: path.join(basePath, 'reduser'),
     nodesDir: nodesPath,
     functionGlobalContext: {

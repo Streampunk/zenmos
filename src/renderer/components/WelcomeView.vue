@@ -10,7 +10,7 @@
           <v-container fill-height fluid>
             <v-layout fill-height>
               <v-flex xs12 align-end flexbox>
-                <span class="headline">Welcome to ZeNMOS - AMWA IS-04 testing application.</span>
+                <span class="headline">Welcome to ZeNMOS - AMWA NMOS test application.</span>
               </v-flex>
             </v-layout>
           </v-container>
