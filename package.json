@@ -159,10 +159,11 @@
       "mdns": "nodes/mdns.js",
       "dns-sd": "nodes/dns-sd.js",
       "dnsBrowser": "nodes/dnsBrowser.js",
-      "nodeLogid": "nodes/nodeLogic.js",
+      "nodeLogic": "nodes/nodeLogic.js",
       "heartbeats": "nodes/heartbeats.js",
       "nodeRequester": "nodes/nodeRequester.js",
-      "SDPValidator": "nodes/SDPValidator.js"
+      "SDPValidator": "nodes/SDPValidator.js",
+      "integrityCheck": "nodes/integrityCheck.js"
     }
   }
 }

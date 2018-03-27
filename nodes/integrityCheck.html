@@ -1,0 +1,86 @@
+<!--
+  Copyright 2018 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('integrity-check',{
+      category: 'zenmos',
+      color: '#B19479',
+      defaults: {
+        name: { value : "" },
+        debug: { value : false }
+      },
+      inputs:1,
+      outputs:1,
+      icon: "inject.png",
+      label: function() {
+        return this.name || "integrity-check";
+      }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="integrity-check">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-debug"><i class="fa fa-random"></i> debug?</label>
+    <input type="checkbox" id="node-input-debug">
+  </div>
+</script>
+
+<style>
+  .param-table table, th, td {
+    vertical-align: top;
+    padding: 3px;
+  }
+</style>
+
+<script type="text/x-red" data-help-name="integrity-check">
+  <h1>Integrity Check</h1>
+  <p>Referential integrity checking for NMOS resources. Checks all store create,
+  update and delete messages that make reference to other NMOS resources to
+  ensure that the target of all the references exist. The node keeps an internal
+  reverse lookup table of reverse references to help tracking down broken links
+  when resources are deleted.</p>
+
+  <p>With the integrity check in place, the order that resources are created,
+  updated and deleted by a node, or on a cleanup operation after a heartbeat
+  failure, is important.</p>
+
+  <p>This node only sends a message if a reference target is missing. It does
+  not send a success message for every resource it validates that successfully
+  passes. Switch on the <code>debug</code> option if you want to see every
+  validation that takes place in the Node-RED debug tab.</p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of node.</td>
+   </tr>
+   <tr>
+     <td for="node-input-debug"><i class="fa fa-random"></i> debug?</td>
+     <td>See all the activity of this node in the debug tab.</td>
+   </tr>
+  </table>
+  </div>
+
+</script>

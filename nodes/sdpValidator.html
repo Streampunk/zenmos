@@ -1,0 +1,199 @@
+<!--
+  Copyright 2018 Streampunk Media Ltd.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('sdp-validator',{
+      category: 'zenmos',
+      color: '#B19479',
+      defaults: {
+        name: { value : "" },
+        checkEndings: { value : false },
+        whitespace: { value: false },
+        should: { value : false },
+        noCopy: { value : false },
+        duplicate: { value : false },
+        videoOnly: { value : false },
+        audioOnly: { value : false },
+        channelOrder: { value : false },
+        useIP4: { value : false },
+        useIP6: { value : false, },
+        multicast: { value : false },
+        unicast: { value : false },
+      },
+      inputs:1,
+      outputs:1,
+      icon: "inject.png",
+      label: function() {
+        return this.name || "sdp-validator";
+      },
+      oneditprepare: function () {
+        const pairs = (first, second) => {
+          $(`input#node-input-${first}`).change(({target}) => {
+            if (target.checked) $(`input#node-input-${second}`).prop('checked', false);
+          });
+          $(`input#node-input-${second}`).change(({target}) => {
+            if (target.checked) $(`input#node-input-${first}`).prop('checked', false);
+          });
+        }
+        pairs('videoOnly', 'audioOnly');
+        pairs('useIP4', 'useIP6');
+        pairs('multicast', 'unicast');
+      }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="sdp-validator">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> name</label>
+    <input type="text" id="node-input-name" placeholder="name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-checkEndings"><i class="fa fa-check" aria-hidden="true"></i> check endings?</label>
+    <input type="checkbox" id="node-input-checkEndings">
+  </div>
+  <div class="form-row">
+    <label for="node-input-whitespace"><i class="fa fa-check" aria-hidden="true"></i> whitespace?</label>
+    <input type="checkbox" id="node-input-whitespace">
+  </div>
+  <div class="form-row">
+    <label for="node-input-should"><i class="fa fa-check" aria-hidden="true"></i> should?</label>
+    <input type="checkbox" id="node-input-should">
+  </div>
+  <div class="form-row">
+    <label for="node-input-noCopy"><i class="fa fa-check" aria-hidden="true"></i> no copy?</label>
+    <input type="checkbox" id="node-input-noCopy">
+  </div>
+  <div class="form-row">
+    <label for="node-input-duplicate"><i class="fa fa-check" aria-hidden="true"></i> duplicate?</label>
+    <input type="checkbox" id="node-input-duplicate">
+  </div>
+  <div class="form-row">
+    <label for="node-input-videoOnly"><i class="fa fa-check" aria-hidden="true"></i> video only?</label>
+    <input type="checkbox" name="typegroup" id="node-input-videoOnly">
+  </div>
+  <div class="form-row">
+    <label for="node-input-audioOnly"><i class="fa fa-check" aria-hidden="true"></i> audio only?</label>
+    <input type="checkbox" name="typegroup" id="node-input-audioOnly">
+  </div>
+  <div class="form-row">
+    <label for="node-input-channelOrder"><i class="fa fa-check" aria-hidden="true"></i> channel order?</label>
+    <input type="checkbox" id="node-input-channelOrder">
+  </div>
+  <div class="form-row">
+    <label for="node-input-useIP4"><i class="fa fa-check" aria-hidden="true"></i> use IPv4?</label>
+    <input type="checkbox" name="ipgroup" id="node-input-useIP4">
+  </div>
+  <div class="form-row">
+    <label for="node-input-useIP6"><i class="fa fa-check" aria-hidden="true"></i> use IPv6?</label>
+    <input type="checkbox" name="ipgroup" id="node-input-useIP6">
+  </div>
+  <div class="form-row">
+    <label for="node-input-multicast"><i class="fa fa-check" aria-hidden="true"></i> multicast?</label>
+    <input type="checkbox" name="castgroup" id="node-input-multicast">
+  </div>
+  <div class="form-row">
+    <label for="node-input-unicast"><i class="fa fa-check" aria-hidden="true"></i> unicast?</label>
+    <input type="checkbox" name="castgroup" id="node-input-unicast">
+  </div>
+</script>
+
+<script type="text/javascript">
+$('input#node-input-multicast').change(({target}) => {
+  console.log(target);
+  if (target.checked) $('input#node-input-unicast').prop('checked', false);
+});
+</script>
+
+<style>
+  .param-table table, th, td {
+    vertical-align: top;
+    padding: 3px;
+  }
+</style>
+
+<script type="text/x-red" data-help-name="sdp-validator">
+  <h1>SDP Validator</h1>
+  <p>Validation of SDP files referenced from the <code>manifest_href</code>
+  property of a <em>sender</em>. When a sender is created or updated and it makes
+  reference to a SDP file, the node attempts to read it and validate it. The output
+  of the validation is either success or a formatted list of validation errors.</p>
+
+  <p>The node offers a number of flags that configure the operation of the
+  validation process. The validation uses the
+  <a href="https://github.com/Streampunk/sdpoker">SDPoker library</a> with
+  the NMOS flag set to true. This means that the SDP file must be accessible
+  over HTTP and end in <code>.sdp</code>, as per the NMOS documentation.</p>
+
+  <p>Note that heartbeat processing is carried out in a separate node.</p>
+
+  <h3>Parameters</h3>
+  <div class="param-table">
+  <table>
+   <tr>
+    <th>parameter</th><th>description</th>
+   </tr>
+   <tr>
+    <td><i class="fa fa-tag" aria-hidden="true"></i> name</td>
+    <td>Name of node.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> check endings?</td>
+    <td>Check line endings are CRLF, no other CR/LF.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> whitespace?</td>
+    <td>Strict check of adherence to whitespace rules.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> should?</td>
+    <td>As well as shall, also check all should clauses.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> no copy?</td>
+    <td>Fail obvious copies of the ST 2110-10 SDP example</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> duplicate?</td>
+    <td>Expect duplicate streams aka ST 2022-7.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> video only?</td>
+    <td>Describes only SMPTE ST 2110-20 streams.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> channel order?</td>
+    <td>Expect audio with ST2110-30 channel-order.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> use IPv4?</td>
+    <td>All addresses expressed in IP v4 notation.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> use IPv6?</td>
+    <td>All addresses expressed in IP v6 notation.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> multicast?</td>
+    <td>Connection addresses must be multicast.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> unicast?</td>
+    <td>Connection addresses must be unicast.</td>
+   </tr>
+  </table>
+  </div>
+
+</script>
