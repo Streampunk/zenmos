@@ -93,7 +93,7 @@
     "node-red": "^0.18.4",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
-    "sdpoker": "^0.0.5",
+    "sdpoker": "^0.0.8",
     "uuid": "^3.2.1",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
