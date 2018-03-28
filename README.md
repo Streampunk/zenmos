@@ -29,7 +29,7 @@ To run the application in development mode:
 
 In this mode, tweaks can be made to the underlying software and the debugger tag is available to interact directly with the software.
 
-See the [building](#building) section for details of creating an installable application. 
+See the [building](#building) section for details of creating an installable application.
 
 ## Using directly with Node-RED
 
@@ -51,7 +51,7 @@ _Ctrl-C_ to stop the server. Now change directory to the user's Node-RED folder 
     npm link zenmos
     node-red
 
-Connect to Node-RED using a webbrowser at http://localhost:1880 and scroll down to find the ZeNMOS nodes at the bottom of the list. The nodes are self-documenting.
+Connect to Node-RED using a rowser at http://localhost:1880 and scroll down to find the ZeNMOS nodes at the bottom of the list. The nodes are self-documenting.
 
 # Building
 
@@ -89,7 +89,7 @@ The following is a list of extensions that the authors would like to make subjec
 * Adding support for IS-05 and IS-06 as appropriate.
 * Linking to external and federated data stores.
 * A graphical dashboard combined with performance testing.
-* Adopting the Sony-contributed _mininet_ scalability testing framework.
+* Integrating alongside the Sony-contributed _mininet_ scalability testing framework.
 * Cross-referencing SDP parameters with those declared in the API.
 * Cloud-hosted testing environments.
 * Pre-built binaries for download.
