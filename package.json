@@ -54,6 +54,11 @@
         "filter": "**/*"
       },
       {
+        "from": "flows",
+        "to": "resources/app/flows",
+        "filter": "**/*"
+      },
+      {
         "from": "util",
         "to": "resources/app/util",
         "filter": "**/*"
