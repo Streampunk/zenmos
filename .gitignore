@@ -69,3 +69,6 @@ build/*
 
 # Directory for Node-RED user files
 reduser
+
+# Mac DS-Store that appears after builds
+.DS_Store
