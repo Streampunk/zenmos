@@ -2,12 +2,12 @@
   <v-layout row>
     <v-flex>
       <v-card>
-        <v-toolbar color="light-blue" dark dense>
+        <v-toolbar color="primary" dark dense>
           <v-toolbar-title>Configuration</v-toolbar-title>
         </v-toolbar>
         <v-card-title>
           <v-dialog v-model="dialog" max-width="500px">
-            <v-btn color="primary" dark slot="activator" class="mb-2">Save Current Flow</v-btn>
+            <v-btn color="blue darken-4" dark slot="activator" class="mb-2">Save Current Flow</v-btn>
             <v-card>
               <v-card-title>
                 <span class="headline">Save Current Flow</span>
@@ -78,11 +78,11 @@
             </template>
             <td class="justify-center layout px-0">
               <v-btn icon class="mx-0" @click="deployFlow(props.item)">
-                <v-icon color="teal">update</v-icon>
+                <v-icon color="green darken-2">play_circle_outline</v-icon>
               </v-btn>
               <template v-if="props.item.template === false">
                 <v-btn icon class="mx-0" @click="deleteFlow(props.item)">
-                  <v-icon color="pink">delete</v-icon>
+                  <v-icon color="pink darken-2">delete_forever</v-icon>
                 </v-btn>
               </template>
             </td>
@@ -263,5 +263,6 @@
 </script>
 
 <style scoped>
-
+table.table tbody td { height: 28px }
+button.mx-0 { margin: 0px }
 </style>
