@@ -90,7 +90,7 @@ module.exports = function (RED) {
     });
 
     this.on('close', () => {
-      log = [];
+      log.splice(0);
       // Not resetting sequence
     });
   }
