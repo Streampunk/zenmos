@@ -2,7 +2,7 @@
   <v-layout row>
     <v-flex>
       <v-card>
-        <v-toolbar color="light-blue" dark dense>
+        <v-toolbar color="primary" dark dense>
           <v-toolbar-title>Resources</v-toolbar-title>
         </v-toolbar>
         <RegistryList/>

@@ -8,34 +8,36 @@
         single-line
         hide-details
         v-model="search"
+        @click="itemSel({})"
       ></v-text-field>
     </v-card-title>
-    <v-data-table
-      :headers="headers"
-      :items="msgs"
-      item-key="sequence"
-      :search="search"
-    >
-      <template slot="items" slot-scope="props">
-        <tr @click="props.expanded = !props.expanded">
-          <td>{{ props.item.sequence }}</td>
-          <td>{{ msgTime(props.item.timestamp) }}</td>
-          <td>{{ props.item.type }}</td>
-        </tr>
-      </template>
-      <template slot="expand" slot-scope="props">
-        <v-expansion-panel expand inset>
-          <v-expansion-panel-content v-for="itemKey in msgObj(props.item)" :key="itemKey" ripple>
-            <div slot="header">{{ itemKey }}</div>
-            <v-card class="grey lighten-2">
-              <v-card-text class="black--text">
-                <pre>{{ msgStr(props.item, itemKey) }}</pre>
-              </v-card-text>
-            </v-card>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </template>
-    </v-data-table>
+    <div class="scroll-container" style="max-height:300px">
+      <v-container>
+        <v-data-table
+          :headers="headers"
+          :items="msgs"
+          item-key="sequence"
+          hide-actions
+          :search="search"
+        >
+          <template slot="items" slot-scope="props">
+            <tr @click="itemSel(props.item)" v-bind:class="{ selected: selected == props.item }">
+              <td>{{ props.item.sequence }}</td>
+              <td>{{ msgTime(props.item.timestamp) }}</td>
+              <td>{{ props.item.type }}</td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-container>
+    </div>
+    <template v-if="msgStr">
+      <v-divider></v-divider>
+      <v-card>
+        <v-card-text>
+          <pre>{{ msgStr }}</pre>
+        </v-card-text>
+      </v-card>  
+    </template>
   </v-card>
 </template>
 
@@ -54,9 +56,26 @@ export default {
         { text: 'Time', value: 'timestamp' },
         { text: 'Type', value: 'type' }
       ],
+      selected: {},
       msgs: []
     };
   },
+
+  computed: {
+    msgStr() {
+      let str = '';
+      const keys = Object.keys(this.selected).filter(k => this.selected.hasOwnProperty(k));
+      if (keys.length) {
+        let filtObj = {};
+        keys.sort()
+          .filter(k => ('req' !== k) && ('res' !== k) && ('_' !== k[0]))
+          .forEach(k => filtObj[k] = this.selected[k]);
+        str = JSON.stringify(filtObj, null, 2);
+      } 
+      return str;
+    }
+  },
+
   methods: {
     connect() {},
     setConnect(connect) {
@@ -65,16 +84,24 @@ export default {
     msgTime(ts) {
       return new Date(ts).toLocaleTimeString('en-US');
     },
-    msgObj(msg) {
-      return Object.keys(msg).filter(k => msg.hasOwnProperty(k)).sort();
-    },
-    msgStr(item, key) {
-      if (('req' === key) || ('res' === key)) return '';
-      return JSON.stringify(item[key], null, 2);
+    itemSel(item) {
+      if (this.selected === item)
+        this.selected = {};
+      else
+        this.selected = item;
     }
   },
+
   created: function () {
     this.msgs = this.connect();
   }
 };
 </script>
+
+<style scoped>
+table.table thead tr { height: 28px }
+table.table tbody td { height: 28px }
+.scroll-container { overflow-y: scroll }
+.container { max-width: 100% }
+tr.selected { color: yellowgreen }
+</style>

@@ -8,34 +8,38 @@
         single-line
         hide-details
         v-model="search"
+        @click="itemSel({})"
       ></v-text-field>
     </v-card-title>
-    <v-data-table
-      :headers="headers"
-      :items="latest"
-      item-key="key"
-      :search="search"
-    >
-      <template slot="items" slot-scope="props">
-        <tr @click="props.expanded = !props.expanded">
-          <td>{{ props.item.key }}</td>
-          <td>{{ regTime(props.item.value.updateTime) }}</td>
-          <td>{{ regTime(props.item.value.createdTime) }}</td>
-        </tr>
-      </template>
-      <template slot="expand" slot-scope="props">
-        <v-expansion-panel expand inset>
-          <v-expansion-panel-content v-for="itemKey in regObj(props.item)" :key="itemKey" ripple>
-            <div slot="header">{{ itemKey }}</div>
-            <v-card class="grey lighten-2">
-              <v-card-text class="black--text">
-                <pre>{{ regStr(props.item, itemKey) }}</pre>
-              </v-card-text>
-            </v-card>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </template>
-    </v-data-table>
+    <div class="scroll-container" style="max-height:300px">
+      <v-container>
+        <v-data-table
+          :headers="headers"
+          :items="latest"
+          item-key="key"
+          hide-actions
+          :search="search"
+        >
+          <template slot="items" slot-scope="props">
+            <tr @click="itemSel(props.item)" v-bind:class="{ selected: selected == props.item }">
+              <td>{{ props.item.key }}</td>
+              <td>{{ regTime(props.item.value.updateTime) }}</td>
+              <td>{{ regTime(props.item.value.createdTime) }}</td>
+              <td>{{ getVersion(props.item) }}</td>
+              <td>{{ getQuantity(props.item) }}</td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-container>
+    </div>
+    <template v-if="msgStr">
+      <v-divider></v-divider>
+      <v-card>
+        <v-card-text>
+          <pre>{{ msgStr }}</pre>
+        </v-card-text>
+      </v-card>  
+    </template>
   </v-card>
 </template>
 
@@ -50,12 +54,33 @@ export default {
           sortable: false,
           value: 'key' },
         { text: 'Update time', value: 'updateTime' },
-        { text: 'Created time', value: 'createdTime' }
+        { text: 'Created time', value: 'createdTime' },
+        { text: 'Version', value: 'version' },
+        { text: 'Qty', value: 'quantity' }
       ],
+      selected: {},
       store: [],
       latest: []
     };
   },
+
+  computed: {
+    msgStr() {
+      let str = '';
+      const latestKeys = Object.keys(this.selected).filter(k => this.selected.hasOwnProperty(k));
+      if (latestKeys.length) {
+        const latestStoreObj = this.store.find(m => m.key === this.selected.value.key); // the latest
+        if (latestStoreObj) {
+          const latestStoreKeys = Object.keys(latestStoreObj.value).filter(k => latestStoreObj.value.hasOwnProperty(k)).sort();
+          let filtObj = {};
+          latestStoreKeys.forEach(k => filtObj[k] = latestStoreObj.value[k]);
+          str = JSON.stringify(filtObj, null, 2);
+        }
+      }
+      return str;
+    }
+  },
+
   methods: {
     connect() { return [ [], [] ]; },
     setConnect(connect) {
@@ -66,24 +91,25 @@ export default {
       return new Date(ts).toLocaleTimeString('en-US');
     },
 
-    regObj(item) {
-      let result = [];
-      const reg = this.store.find(m => m.key === item.value.key); // the latest
-      if (reg)
-        result = Object.keys(reg.value).filter(k => reg.value.hasOwnProperty(k)).sort();
-
-      // const oldRegs = this.store.filter(m => m.key.slice(0, m.key.lastIndexOf('_')) === item.key);
-      // console.log('Old versions:', oldRegs);
-
-      return result;
+    getVersion(item) {
+      const latestStoreObj = this.store.find(i => i.key === item.value.key); // the latest
+      return latestStoreObj ? latestStoreObj.value.version : '?';
     },
 
-    regStr(item, key) {
-      let result = '';
-      const reg = this.store.find(m => m.key === item.value.key);
-      if (reg)
-        result = JSON.stringify(reg.value[key], null, 2);
-      return result;
+    getQuantity(item) {
+      const allStoreObjs = this.store.filter(i => item.key === i.key.substring(0, i.key.lastIndexOf('_')));
+      return allStoreObjs.length;
+    },
+
+    itemSel(item) {
+      if (this.selected === item)
+        this.selected = {};
+      else
+        this.selected = item;
+    },
+
+    isSel(item) {
+      return this.selected === item;
     }
   },
 
@@ -92,3 +118,11 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+table.table thead tr { height: 28px }
+table.table tbody td { height: 28px }
+.scroll-container { overflow-y: scroll }
+.container { max-width: 100% }
+tr.selected { color: yellowgreen }
+</style>
