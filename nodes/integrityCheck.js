@@ -30,7 +30,42 @@ module.exports = function (RED) {
       if (msg.req.params.resource === srcType) {
         let resource = msg.payload;
         if (Array.isArray(resource[prop])) {
-          // TODO
+          let missing = resource[prop].filter(ref =>
+            !msg.store.exists(destType, ref));
+          resource[prop]
+            .filter(ref => missing.indexOf(ref) < 0)
+            .forEach(ref => addRef(resource.id, ref));  
+          if (missing.length > 0) {
+            if (config.debug) {
+              RED.comms.publish('debug', { msg: {
+                type: 'integrity check failure',
+                property: `${srcType}.${prop}`,
+                source_id: resource.id,
+                dest_id: resource[prop]
+              } });
+              this.send({ msg : {
+                type: 'integrity check failure',
+                payload: {
+                  code: 404,
+                  error: `Property '${srcType}.${prop}' references one or more ${destType}(s) not known in the registry.`,
+                  debug: {
+                    property: `${srcType}.${prop}`,
+                    source_id: resource.id,
+                    dest_id: missing
+                  }
+                }
+              } });
+            }
+          } else {
+            if (config.debug) {
+              RED.comms.publish('debug', { msg: {
+                type: 'integrity check success',
+                property: `${srcType}.${prop}`,
+                source_id: resource.id,
+                dest_id: resource[prop]
+              } });
+            }
+          }
         } else {
           addRef(resource.id, resource[prop]);
           if (!msg.store.exists(destType, resource[prop])) {

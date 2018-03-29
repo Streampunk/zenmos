@@ -51,7 +51,7 @@ _Ctrl-C_ to stop the server. Now change directory to the user's Node-RED folder 
     npm link zenmos
     node-red
 
-Connect to Node-RED using a rowser at http://localhost:1880 and scroll down to find the ZeNMOS nodes at the bottom of the list. The nodes are self-documenting.
+Connect to Node-RED using a browser at http://localhost:1880 and scroll down to find the ZeNMOS nodes at the bottom of the list. The nodes are self-documenting.
 
 # Building
 
