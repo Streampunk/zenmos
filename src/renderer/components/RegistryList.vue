@@ -88,7 +88,7 @@ export default {
     },
 
     regTime(ts) {
-      return new Date(ts).toLocaleTimeString('en-US');
+      return new Date(ts).toISOString().replace('T', ' ').substr(0, 19);
     },
 
     getVersion(item) {
@@ -124,5 +124,5 @@ table.table thead tr { height: 28px }
 table.table tbody td { height: 28px }
 .scroll-container { overflow-y: scroll }
 .container { max-width: 100% }
-tr.selected { color: yellowgreen }
+tr.selected { color: #40c4ff }
 </style>

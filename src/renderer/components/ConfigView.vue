@@ -7,7 +7,7 @@
         </v-toolbar>
         <v-card-title>
           <v-dialog v-model="dialog" max-width="500px">
-            <v-btn color="blue darken-4" dark slot="activator" class="mb-2">Save Current Flow</v-btn>
+            <v-btn color="secondary" dark slot="activator" class="mb-2">Save Current Flow</v-btn>
             <v-card>
               <v-card-title>
                 <span class="headline">Save Current Flow</span>
@@ -22,8 +22,8 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="blue darken-1" flat @click.native="close">Cancel</v-btn>
-                <v-btn color="blue darken-1" flat @click.native="save">Save</v-btn>
+                <v-btn color="primary" flat @click.native="close">Cancel</v-btn>
+                <v-btn color="primary" flat @click.native="save">Save</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -50,7 +50,7 @@
             <template v-else>
              <td>template</td>
             </template>
-            <td>{{ props.item.modDate }}</td>
+            <td>{{ timeStr(props.item.modDate) }}</td>
             <template v-if="props.item.template === false">
               <td>
                 <v-edit-dialog
@@ -78,11 +78,11 @@
             </template>
             <td class="justify-center layout px-0">
               <v-btn icon class="mx-0" @click="deployFlow(props.item)">
-                <v-icon color="green darken-2">play_circle_outline</v-icon>
+                <v-icon color="accent">play_circle_outline</v-icon>
               </v-btn>
               <template v-if="props.item.template === false">
                 <v-btn icon class="mx-0" @click="deleteFlow(props.item)">
-                  <v-icon color="pink darken-2">delete_forever</v-icon>
+                  <v-icon color="error">delete_forever</v-icon>
                 </v-btn>
               </template>
             </td>
@@ -136,11 +136,10 @@
     methods: {
       addFlowEntry(filepath) {
         const parsed = path.parse(filepath);
-        const modDate = fs.statSync(filepath).mtime.toLocaleTimeString('en-US');
         const flow = {
           filepath: filepath,
           filename: parsed.name,
-          modDate: modDate,
+          modDate: fs.statSync(filepath).mtime,
           description: 'None - click to edit',
           template: templateFlowsPath === parsed.dir
         };
@@ -198,6 +197,10 @@
       deleteFlow(flow) {
         const index = this.flows.indexOf(flow);
         confirm('Are you sure you want to delete this flow?') && fs.unlink(this.flows[index].filepath, () => {});
+      },
+
+      timeStr(ts) {
+        return new Date(ts).toISOString().replace('T', ' ').substr(0, 19);
       },
 
       close() {

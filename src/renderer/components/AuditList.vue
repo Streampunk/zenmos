@@ -81,9 +81,11 @@ export default {
     setConnect(connect) {
       this.connect = connect;
     },
+
     msgTime(ts) {
-      return new Date(ts).toLocaleTimeString('en-US');
+      return new Date(ts).toISOString().replace('T', ' ').substr(0, 23);
     },
+
     itemSel(item) {
       if (this.selected === item)
         this.selected = {};
@@ -103,5 +105,5 @@ table.table thead tr { height: 28px }
 table.table tbody td { height: 28px }
 .scroll-container { overflow-y: scroll }
 .container { max-width: 100% }
-tr.selected { color: yellowgreen }
+tr.selected { color: #40c4ff }
 </style>
