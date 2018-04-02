@@ -1,6 +1,7 @@
 <template>
   <v-card>
-    <v-card-title>
+    <v-card-title style="align-items: baseline; padding-top: 0px; padding-bottom: 0px">
+      <v-btn color="secondary" dark @click="clearAll()">Clear All</v-btn>
       <v-spacer></v-spacer>
       <v-text-field
         append-icon="search"
@@ -8,11 +9,10 @@
         single-line
         hide-details
         v-model="search"
-        @click="itemSel({})"
       ></v-text-field>
     </v-card-title>
     <div class="scroll-container" style="max-height:300px">
-      <v-container>
+      <v-container style="padding-top: 0px; padding-bottom: 0px">
         <v-data-table
           :headers="headers"
           :items="msgs"
@@ -91,6 +91,10 @@ export default {
         this.selected = {};
       else
         this.selected = item;
+    },
+
+    clearAll() {
+      this.msgs.splice(0);
     }
   },
 

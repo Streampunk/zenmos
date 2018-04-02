@@ -5,7 +5,7 @@
         <v-toolbar color="primary" dark dense>
           <v-toolbar-title>Configuration</v-toolbar-title>
         </v-toolbar>
-        <v-card-title>
+        <v-card-title style="align-items: baseline; padding-top: 0px; padding-bottom: 0px">
           <v-dialog v-model="dialog" max-width="500px">
             <v-btn color="secondary" dark slot="activator" class="mb-2">Save Current Flow</v-btn>
             <v-card>
