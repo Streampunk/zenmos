@@ -94,6 +94,7 @@ export default {
     },
 
     clearAll() {
+      this.selected = {};
       this.msgs.splice(0);
     }
   },
