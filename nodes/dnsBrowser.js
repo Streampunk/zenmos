@@ -15,20 +15,20 @@
 
 const dnsjs = require('dns-suite');
 
-function createUDPListener(options, cb) {
+function createUDPListener(node, options, cb) {
   const socket = require('dgram').createSocket({ type: 'udp4', reuseAddr: true });
   socket.bind({ address: options.address, port: options.port });
 
   var handlers = {};
   handlers.onError = function (err) {
     if ('EACCES' === err.code) {
-      console.error('');
-      console.error('EACCES: Couldn\'t bind to port. You probably need to use sudo, authbind, or setcap.');
-      console.error('');
+      node.error('');
+      node.error('EACCES: Couldn\'t bind to port. You probably need to use sudo, authbind, or setcap.');
+      node.error('');
       process.exit(123);
       return;
     }
-    console.error('error:', err.stack);
+    node.error('error:', err.stack);
     socket.close();
   };
 
@@ -37,7 +37,7 @@ function createUDPListener(options, cb) {
       try {
         cb(null, dnsjs.DNSPacket.parse(nb), rinfo);
       } catch(e) {
-        console.error('Could not parse DNS query, ignoring.');
+        node.warn('Could not parse DNS query, ignoring.');
       }
     }
   };
@@ -45,7 +45,7 @@ function createUDPListener(options, cb) {
   handlers.onListening = function () {
     if (options.mdns)
       socket.addMembership('224.0.0.251');
-    console.log(`Started ${options.mdns?'m':''}DNS Browser at '${socket.address().address}:${socket.address().port}'`);
+    node.log(`Started ${options.mdns?'m':''}DNS Browser at '${socket.address().address}:${socket.address().port}'`);
   };
 
   socket.on('error', handlers.onError);
@@ -58,6 +58,7 @@ function createUDPListener(options, cb) {
 module.exports = function (RED) {
   function DNSBrowser (config) {
     RED.nodes.createNode(this, config);
+    const node = this;
 
     const mdns = !(config.unicast || false);
     const address = config.interface || '127.0.0.1';
@@ -88,7 +89,7 @@ module.exports = function (RED) {
     const services = [];
     function checkService(service) {
       if (mdns)
-        console.log(`DNS Browser: insufficient data received for ${service.name} after ${timeout}ms`);
+        node.log(`DNS Browser: insufficient data received for ${service.name} after ${timeout}ms`);
       if (service.instance) {
         if (!service.target)
           send(makeQuery(service.instance, 'SRV'));
@@ -128,9 +129,9 @@ module.exports = function (RED) {
 
     const bindPort = mdns ? port : 0;
     const bindAddress = '127.0.0.1' === address ? '0.0.0.0' : address; 
-    const socket = createUDPListener({ address: bindAddress, port: bindPort, mdns: mdns }, (err, packet, rinfo) => {
+    const socket = createUDPListener(node, { address: bindAddress, port: bindPort, mdns: mdns }, (err, packet, rinfo) => {
       if (err)
-        console.error(`Error from ${rinfo.address}:${rinfo.port}: `, err);
+        node.error(`Error from ${rinfo.address}:${rinfo.port}: `, err);
       else {
         packet.answer.forEach(a => {
           if (a.name === dns_sd_query && a.data.indexOf('nmos') >= 0) {
