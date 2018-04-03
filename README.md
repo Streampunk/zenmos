@@ -2,7 +2,7 @@
 
 Automated testing application for AMWA NMOS IS-04. The source in this folder is for an [Electron](https://electronjs.org/) application that tests aspects of implementation of the [AMWA NMOS specifications](https://amwa-tv.github.io/nmos/), focussing on [IS-04 discovery and registration](https://amwa-tv.github.io/nmos-discovery-registration/) in the first instance. The design is highly modular, so the project can also be used as a set of [Node-RED](https://nodered.org/) modules that can be assembled to be NMOS components in their own right.
 
-This is early release code at version v0.0.1. Please see the [enhancements](#enhancements) section for details of the features that are and are not yet supported.
+This is early release code at version v0.1.0. Please see the [enhancements](#enhancements) section for details of the features that are and are not yet supported.
 
 # Installation
 
@@ -57,11 +57,11 @@ Connect to Node-RED using a browser at http://localhost:1880 and scroll down to 
 
 Create operating-system-specific install packages of ZeNMOS using _Electron Builder_. Currently tested platforms are Windows and Mac OSX.
 
-    npm run-script build
+    npm run build
 
 Go and make a cup of your favorite beverage.
 
-In the `build` folder, an install package will be created. For Windows `Zenmos Setup 0.0.1.exe` and for Mac `Zenmos-0.0.1.dmg`.
+In the `build` folder, an install package will be created. For Windows `Zenmos Setup x.x.x.exe` and for Mac `Zenmos-x.x.x.dmg`.
 
 Install and run the packages in the normal way for your platform.
 

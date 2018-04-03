@@ -1,6 +1,6 @@
 {
   "name": "zenmos",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Automated testing application for AMWA NMOS IS-04.",
   "main": "./dist/electron/main.js",
   "scripts": {
