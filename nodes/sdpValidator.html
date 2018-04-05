@@ -28,6 +28,7 @@
         videoOnly: { value : false },
         audioOnly: { value : false },
         channelOrder: { value : false },
+        shaping: { value : false },
         useIP4: { value : false },
         useIP6: { value : false, },
         multicast: { value : false },
@@ -91,6 +92,10 @@
   <div class="form-row">
     <label for="node-input-channelOrder"><i class="fa fa-check" aria-hidden="true"></i> channel order?</label>
     <input type="checkbox" id="node-input-channelOrder">
+  </div>
+  <div class="form-row">
+    <label for="node-input-shaping"><i class="fa fa-check" aria-hidden="true"></i> shaping</label>
+    <input type="checkbox" id="node-input-shaping">
   </div>
   <div class="form-row">
     <label for="node-input-useIP4"><i class="fa fa-check" aria-hidden="true"></i> use IPv4?</label>
@@ -176,6 +181,10 @@ $('input#node-input-multicast').change(({target}) => {
    <tr>
     <td><i class="fa fa-check" aria-hidden="true"></i> channel order?</td>
     <td>Expect audio with ST2110-30 channel-order.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-check" aria-hidden="true"></i> shaping</td>
+    <td>Check adherence to SMPTE ST 2110-21 traffic shaping specification.</td>
    </tr>
    <tr>
     <td><i class="fa fa-check" aria-hidden="true"></i> use IPv4?</td>
