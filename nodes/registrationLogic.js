@@ -82,6 +82,9 @@ module.exports = function (RED) {
       if (!msg.type.startsWith('HTTP REQ')) {
         return; // Only process HTTP messages
       }
+      if (typeof msg.validated !== 'boolean') {
+        msg.validated = false;
+      }
       if (msg.validated !== config.validated) {
         return; // Process valid messages or not depending on configuration
       }
