@@ -101,7 +101,9 @@
         const existing = this[map].findIndex(m => m.key === key);
         if (existing >= 0)
           this[map].splice(existing, 1);
-        this[map].push({ key : key, value : value });
+        const tombstone = ('latest' === map) && value.key.startsWith('tombstone');
+        if (!tombstone)
+          this[map].push({ key : key, value : value });
       },
 
       regClear(map) {
