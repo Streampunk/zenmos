@@ -1,2 +1,0 @@
-curl -X POST http://localhost:3101/x-nmos/registration/v1.2/resource/ -H 'Content-Type: application/json' -d '@post-node-1.json'
-curl -X DELETE http://localhost:3101/x-nmos/registration/v1.2/resource/nodes/3b8be755-08ff-452b-b217-c9151eb21193

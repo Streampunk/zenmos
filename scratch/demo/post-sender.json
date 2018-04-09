@@ -1,0 +1,23 @@
+{
+  "type": "sender",
+  "data": {
+    "description": "Camera 1",
+    "label": "Camera 1",
+    "manifest_href": "http://172.29.176.146/x-manufacturer/senders/171d5c80-7fff-4c23-9383-46503eb1c63e/stream.sdp",
+    "version": "1441723958:235623703",
+    "flow_id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+    "id": "171d5c80-7fff-4c23-9383-46503eb1c63e",
+    "transport": "urn:x-nmos:transport:rtp.mcast",
+    "interface_bindings":[
+      "eth0",
+      "eth1"
+    ],
+    "device_id": "67c25159-ce25-4000-a66c-f31fff890265",
+    "caps": {},
+    "tags": {},
+    "subscription": {
+      "receiver_id": null,
+      "active": true
+    }
+  }
+}

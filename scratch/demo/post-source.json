@@ -1,0 +1,19 @@
+{
+  "type": "source",
+  "data": {
+    "description": "Capture Card Source Video",
+    "tags": {
+        "host": [
+            "host1"
+        ]
+    },
+    "format": "urn:x-nmos:format:video",
+    "caps": {},
+    "version": "1441703336:902850419",
+    "parents": [],
+    "label": "CaptureCardSourceVideo",
+    "id": "4569cea2-ab63-4f97-8dd1-bad4669ea5e4",
+    "device_id": "67c25159-ce25-4000-a66c-f31fff890265",
+    "clock_name": "clk1"
+  }
+}
