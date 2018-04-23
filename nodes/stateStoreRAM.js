@@ -188,6 +188,7 @@ module.exports = function (RED) {
           createdTime: createdTime
         });
         msg.type = 'store delete success';
+        msg.store = this;
         return this.send(msg);
       }
 

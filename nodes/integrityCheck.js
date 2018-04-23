@@ -19,43 +19,45 @@ module.exports = function (RED) {
 
     let revRef = new Map; // Reverse lookup - on delete, what might reference me?
 
-    const addRef = (src, dest) => {
+    const addRef = (src, srcType, dest) => {
       if (!revRef.has(dest)) {
         revRef.set(dest, new Set);
       }
-      revRef.get(dest).add(src);
+      revRef.get(dest).add({ src: src, type: srcType });
     };
 
-    let checkRef = (msg, srcType, destType, prop) => {
+    let checkRef = (msg, srcType, destType, prop, deleting = false) => {
       if (msg.req.params.resource.startsWith(srcType)) {
         let resource = msg.payload;
         if (Array.isArray(resource[prop])) {
-          debugger;
           let missing = resource[prop].filter(ref =>
             !msg.store.exists(destType, ref));
           resource[prop]
             .filter(ref => missing.indexOf(ref) < 0)
-            .forEach(ref => addRef(resource.id, ref));
+            .forEach(ref => addRef(resource.id, msg.req.params.resource, ref));
           if (missing.length > 0) {
             if (config.debug) {
               RED.comms.publish('debug', { msg: {
                 type: 'integrity check failure',
                 property: `${srcType}.${prop}`,
                 source_id: resource.id,
-                dest_id: resource[prop]
+                dest_id: resource[prop],
+                deleting: deleting
               } });
-              this.send({ msg : {
+              this.send({
                 type: 'integrity check failure',
                 payload: {
                   code: 404,
-                  error: `Property '${srcType}.${prop}' references one or more ${destType}(s) not known in the registry.`,
+                  error: (deleting ? 'Deleted destination means property ' : 'Property ') +
+                    `'${srcType}.${prop}' references one or more ${destType}(s) not known in the registry.`,
                   debug: {
                     property: `${srcType}.${prop}`,
                     source_id: resource.id,
-                    dest_id: missing
+                    dest_id: missing,
+                    deleting: deleting
                   }
                 }
-              } });
+              });
             }
           } else {
             if (config.debug) {
@@ -63,33 +65,36 @@ module.exports = function (RED) {
                 type: 'integrity check success',
                 property: `${srcType}.${prop}`,
                 source_id: resource.id,
-                dest_id: resource[prop]
+                dest_id: resource[prop],
+                deleting: deleting
               } });
             }
           }
         } else {
-          addRef(resource.id, resource[prop]);
-          debugger;
+          addRef(resource.id, msg.req.params.resource, resource[prop]);
           if (!msg.store.exists(destType, resource[prop])) {
             if (config.debug) {
               RED.comms.publish('debug', { msg: {
                 type: 'integrity check failure',
                 property: `${srcType}.${prop}`,
                 source_id: resource.id,
-                dest_id: resource[prop]
+                dest_id: resource[prop],
+                deleting: deleting
               } });
-              this.send({ msg : {
+              this.send({
                 type: 'integrity check failure',
                 payload: {
                   code: 404,
-                  error: `Property '${srcType}.${prop}' references a ${destType} not known in the registry.`,
+                  error: (deleting ? 'Deleted destination means property ' : 'Property ') +
+                    `'${srcType}.${prop}' references a ${destType} not known in the registry.`,
                   debug: {
                     property: `${srcType}.${prop}`,
                     source_id: resource.id,
-                    dest_id: resource[prop]
+                    dest_id: resource[prop],
+                    deleting: deleting
                   }
                 }
-              } });
+              });
             }
           } else {
             if (config.debug) {
@@ -97,7 +102,8 @@ module.exports = function (RED) {
                 type: 'integrity check success',
                 property: `${srcType}.${prop}`,
                 source_id: resource.id,
-                dest_id: resource[prop]
+                dest_id: resource[prop],
+                deleting: deleting
               } });
             }
           }
@@ -127,12 +133,30 @@ module.exports = function (RED) {
         checkRef(msg, 'flow', 'device', 'device_id');
         checkRef(msg, 'flow', 'flow', 'parents');
       }
-      if (msg.type.indexOf('delete') >= 0) {
-        // device => node_id, senders array, receivers array
-        // source => device_id, parents array
-        // receiver => device_id, subscription/sender_id
-        // sender => device_id, flow_id, subscription/receiver_id (unicast only)
-        // flow => source_id, device_id, parents
+      if (config.deleted === true && msg.type.indexOf('delete') >= 0) {
+        if (revRef.has(msg.req.params.id)) {
+          for ( let src of revRef.get(msg.req.params.id)) {
+            let testMsg = Object.assign({}, msg);
+            testMsg.payload = src.src;
+            testMsg.req.params.resource = src.type;
+            // device => node_id (senders array & receivers array deprecated - phew!)
+            checkRef(testMsg, 'device', 'node', 'node_id', true);
+            // source => device_id, parents array
+            checkRef(testMsg, 'source', 'device', 'device_id', true);
+            checkRef(testMsg, 'source', 'source', 'parents', true);
+            // receiver => device_id, subscription/sender_id
+            checkRef(testMsg, 'receiver', 'device', 'device_id', true);
+            // TODO subscriptions
+            // sender => device_id, flow_id, subscription/receiver_id (unicast only)
+            checkRef(msg, 'sender', 'device', 'device_id', true);
+            checkRef(msg, 'sender', 'flow', 'flow_id', true);
+            // TODO subscription
+            // flow => source_id, device_id, parents
+            checkRef(msg, 'flow', 'source', 'source_id', true);
+            checkRef(msg, 'flow', 'device', 'device_id', true);
+            checkRef(msg, 'flow', 'flow', 'parents', true);
+          }
+        }
       }
       return; // Another kind of store message
     });

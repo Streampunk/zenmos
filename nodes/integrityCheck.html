@@ -20,7 +20,8 @@
       color: '#B19479',
       defaults: {
         name: { value : "" },
-        debug: { value : false }
+        debug: { value : false },
+        deleted: { value : true }
       },
       inputs:1,
       outputs:1,
@@ -39,6 +40,10 @@
   <div class="form-row">
     <label for="node-input-debug"><i class="fa fa-random"></i> debug?</label>
     <input type="checkbox" id="node-input-debug">
+  </div>
+  <div class="form-row">
+   <label for="node-input-deleted"><i class="fa fa-trash" aria-hidden="true"></i> deleted?</label>
+   <input type="checkbox" id="node-input-deleted" chceked>
   </div>
 </script>
 
@@ -59,7 +64,8 @@
 
   <p>With the integrity check in place, the order that resources are created,
   updated and deleted by a node, or on a cleanup operation after a heartbeat
-  failure, is important.</p>
+  failure, is important. With the <code>deleted</code> flag set, integrity must
+  be maintained when a resource is deleted.</p>
 
   <p>This node only sends a message if a reference target is missing. It does
   not send a success message for every resource it validates that successfully
@@ -80,8 +86,12 @@
     <td>Name of node.</td>
    </tr>
    <tr>
-     <td for="node-input-debug"><i class="fa fa-random"></i> debug?</td>
+     <td><i class="fa fa-random"></i> debug?</td>
      <td>See all the activity of this node in the debug tab.</td>
+   </tr>
+   <tr>
+    <td><i class="fa fa-trash" aria-hidden="true"></i> deleted?</td>
+    <td>Check that integrity is maintained when a resource is deleted.</td>
    </tr>
   </table>
   </div>
