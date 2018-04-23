@@ -4,8 +4,8 @@
 
 For example:
 
-    curl https://localhost:3101/
-    curl https://localhost:3101/x-nmos/registration/
+    curl http://localhost:3101/
+    curl http://localhost:3101/x-nmos/registration/
 
 ## Create resources
 

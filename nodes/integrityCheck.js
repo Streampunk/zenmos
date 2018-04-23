@@ -27,14 +27,15 @@ module.exports = function (RED) {
     };
 
     let checkRef = (msg, srcType, destType, prop) => {
-      if (msg.req.params.resource === srcType) {
+      if (msg.req.params.resource.startsWith(srcType)) {
         let resource = msg.payload;
         if (Array.isArray(resource[prop])) {
+          debugger;
           let missing = resource[prop].filter(ref =>
             !msg.store.exists(destType, ref));
           resource[prop]
             .filter(ref => missing.indexOf(ref) < 0)
-            .forEach(ref => addRef(resource.id, ref));  
+            .forEach(ref => addRef(resource.id, ref));
           if (missing.length > 0) {
             if (config.debug) {
               RED.comms.publish('debug', { msg: {
@@ -68,6 +69,7 @@ module.exports = function (RED) {
           }
         } else {
           addRef(resource.id, resource[prop]);
+          debugger;
           if (!msg.store.exists(destType, resource[prop])) {
             if (config.debug) {
               RED.comms.publish('debug', { msg: {
@@ -104,7 +106,7 @@ module.exports = function (RED) {
     };
 
     this.on('input', msg => {
-      if (!msg.type.startsWith('store') && !msg.type.endsWith('success')) {
+      if (!msg.type.startsWith('store') || !msg.type.endsWith('success')) {
         return; // Only check store messages that are successful
       }
       if (msg.type.indexOf('create') >= 0) {
@@ -125,7 +127,7 @@ module.exports = function (RED) {
         checkRef(msg, 'flow', 'device', 'device_id');
         checkRef(msg, 'flow', 'flow', 'parents');
       }
-      if (msg.type.indexof('delete') >= 0) {
+      if (msg.type.indexOf('delete') >= 0) {
         // device => node_id, senders array, receivers array
         // source => device_id, parents array
         // receiver => device_id, subscription/sender_id
