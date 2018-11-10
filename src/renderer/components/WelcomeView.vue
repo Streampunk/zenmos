@@ -2,7 +2,7 @@
   <v-layout>
     <v-flex>
       <v-card>
-        <v-card-media
+        <v-img
           class="white--text"
           height="400px"
           src="static/streampunk.png"
@@ -14,7 +14,7 @@
               </v-flex>
             </v-layout>
           </v-container>
-        </v-card-media>
+        </v-img>
         <v-divider></v-divider>
         <v-card-actions class="pt-3 pb-3">
           <v-spacer></v-spacer>
