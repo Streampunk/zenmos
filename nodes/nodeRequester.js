@@ -78,6 +78,21 @@ module.exports = function (RED) {
 
       // Collect mDNS and unicast DNS browse details, process MSG queue if one exists
       // If mDNS goes away, set basePath back to null, rebuild the queue
+      if (msgType.startsWith('DNS Browser') &&
+        msg.payload.name.indexOf('_nmos-registration') >= 0) {
+
+        let proto = msg.payload.txt.find(x => x.startsWith('api_proto='));
+        if (proto === undefined) {
+          this.warn('No \'api_proto\' in DNS-SD response data. Assuming \'http\'.');
+          proto = 'http';
+        } else {
+          proto = proto.slice(10);
+        }
+        basePath = `${proto}://${msg.payload.address}:${msg.payload.port}`;
+        msgQueue.forEach(processMessage);
+        msgQueue = [];
+        return;
+      }
 
       if (!msgType.startsWith('HTTP INIT') || msg.api !== 'nodes') {
         return;

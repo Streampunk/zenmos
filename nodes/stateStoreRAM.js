@@ -19,7 +19,7 @@ const { stampPattern, compareVersions, extractVersions,
 const PAGING_LIMIT = 10;
 
 module.exports = function (RED) {
-  const persist = { 
+  const persist = {
     store: new Map, // Store of all NMOS resource
     latest: new Map // Store of pointers to the latest version
   };
@@ -72,7 +72,7 @@ module.exports = function (RED) {
       if (msg.type === 'store create request') {
         if (!msg.payload.type) {
           msg.type = 'store create error';
-          msg.payload = `On resource creation for type ${resourceType}, type field is ${msg.payload.type}.`;
+          msg.payload = `On resource creation, type field is ${msg.payload.type}.`;
           return this.send(msg);
         }
         let resourceType = msg.payload.type + 's';
@@ -188,6 +188,7 @@ module.exports = function (RED) {
           createdTime: createdTime
         });
         msg.type = 'store delete success';
+        msg.store = this;
         return this.send(msg);
       }
 
@@ -286,6 +287,12 @@ module.exports = function (RED) {
       mapClear('store');
       mapClear('latest');
     });
+
+    this.exists = (resourceType, id) => {
+      let key = resourceType.endsWith('s') ?
+        `${resourceType}_${id}` : `${resourceType}s_${id}`;
+      return latest.has(key) && !latest.get(key).key.startsWith('tombstone');
+    };
   }
   RED.nodes.registerType('state-store-RAM', StateStoreRAM);
 };

@@ -119,6 +119,10 @@ module.exports = function (RED) {
         return; // Only process registration messages
       }
 
+      if (msg.req.url.indexOf('health/nodes') >= 0) {
+        return; // Let the heartbeat processing logic deal with the message
+      }
+
       if (!msg.req.params.resource) { // Registration API base path request
         msg.type = msgType.startsWith('HTTP REQ GET') ? 'HTTP RES 200' : 'HTTP RES 400';
         msg.statusCode = msgType.startsWith('HTTP REQ GET') ? 200 : 400;
@@ -130,10 +134,6 @@ module.exports = function (RED) {
             debug: msg.req.url
           };
         return this.send(msg);
-      }
-
-      if (msg.req.url.indexOf('health/nodes') >= 0) {
-        return; // Let the heartbeat processing logic deal with the message
       }
 
       if (msg.req.params.resource === 'resource') {
