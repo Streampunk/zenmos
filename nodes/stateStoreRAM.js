@@ -184,7 +184,7 @@ module.exports = function (RED) {
         mapSet('latest', latestKey, {
           key: `tombstone_${oldResVer}`,
           apiVersion: msg.version,
-          updatedTime: Date.now(),
+          updateTime: Date.now(),
           createdTime: createdTime
         });
         msg.type = 'store delete success';

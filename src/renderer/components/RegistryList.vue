@@ -21,7 +21,7 @@
         >
           <template slot="items" slot-scope="props">
             <tr @click="itemSel(props.item)" v-bind:class="{ selected: selected == props.item }">
-              <td>{{ props.item.key }}</td>
+              <td v-bind:class="{ strikethrough: props.item.deleted }">{{ props.item.key }}</td>
               <td>{{ regTime(props.item.value.updateTime) }}</td>
               <td>{{ regTime(props.item.value.createdTime) }}</td>
               <td>{{ getVersion(props.item) }}</td>
@@ -68,7 +68,8 @@ export default {
       let str = '';
       const latestKeys = Object.keys(this.selected).filter(k => this.selected.hasOwnProperty(k));
       if (latestKeys.length) {
-        const latestStoreObj = this.store.find(m => m.key === this.selected.value.key); // the latest
+        const latestStoreKey = this.selected.deleted ? `${this.selected.key}_${this.selected.value.key.substring(10)}` : this.selected.value.key;
+        const latestStoreObj = this.store.find(m => m.key === latestStoreKey); // the latest
         if (latestStoreObj) {
           const latestStoreKeys = Object.keys(latestStoreObj.value).filter(k => latestStoreObj.value.hasOwnProperty(k)).sort();
           let filtObj = {};
@@ -91,7 +92,8 @@ export default {
     },
 
     getVersion(item) {
-      const latestStoreObj = this.store.find(i => i.key === item.value.key); // the latest
+      const storeKey = item.deleted ? `${item.key}_${item.value.key.substring(10)}` : item.value.key;
+      const latestStoreObj = this.store.find(i => i.key === storeKey); // the latest
       return latestStoreObj ? latestStoreObj.value.version : '?';
     },
 
@@ -123,5 +125,6 @@ table.table thead tr { height: 28px }
 table.table tbody td { height: 28px }
 .scroll-container { overflow-y: scroll }
 .container { max-width: 100% }
-tr.selected { color: #40c4ff }
+.selected { color: #40c4ff }
+.strikethrough { text-decoration: line-through }
 </style>
